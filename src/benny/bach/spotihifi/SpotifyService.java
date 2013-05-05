@@ -29,20 +29,25 @@ public class SpotifyService extends Thread implements Callback {
 	public static final int SKIP_MSG_ID = 6;
 	public static final int STOP_MSG_ID = 7;
 	public static final int RESULT_MSG_ID = 8;
+	public static final int CONNECT_MSG_ID = 9;
+	public static final int DISCONNECT_MSG_ID = 10;
 	
-	// Message tag.
+	// Message tags.
+	public static final String TAG_IP_ID = "ip";
+	public static final String TAG_PORT_ID = "port";
 	public static final String TAG_TRACK_ID = "track";
 	public static final String TAG_RESULT_ID = "result";
 	public static final String TAG_PLAYLIST_ID = "playlist";
-	
-	private static final String SERVER_IP = "192.168.1.103";
 	
 	private SongDatabase mDb;
 	private Handler mReqHandler;
 	private Handler mResHandler;
 	private Socket mSocket;
+	private String mIpAddress;
+	private int mPort;
 	
-	public SpotifyService(Handler handler, SongDatabase db) {
+	public SpotifyService(Handler handler, SongDatabase db) 
+	{
 		mResHandler = handler;
 		mDb = db;
 		
@@ -51,31 +56,10 @@ public class SpotifyService extends Thread implements Callback {
   
         mReqHandler = new Handler(handlerThread.getLooper(), this);
 	}
-
-	public void connect() {
-		try {
-			mSocket = new Socket();
-			mSocket.connect(new InetSocketAddress(SERVER_IP, 8081));
-		}
-		catch(IOException ex) {
-			Log.e(TAG, "socket connect failed");
-		}
-	}
-	
-	public void disconnect() {
-		try {
-			if ( mSocket.isConnected() ) {
-				mSocket.close();
-				mSocket = null;
-			}
-		}
-		catch(IOException ex) {
-			Log.e(TAG, "socket close failed");
-		}
-	}
 	
 	@Override
-	public void run() {
+	public void run() 
+	{
 		try {
 			while ( true ) {
 				if ( mSocket != null && mSocket.isConnected() ) {
@@ -156,7 +140,8 @@ public class SpotifyService extends Thread implements Callback {
 	}
 
 	@Override
-	public boolean handleMessage(Message msg) {
+	public boolean handleMessage(Message msg) 
+	{
 		switch ( msg.what )
 		{
 		case SYNC_MSG_ID:
@@ -185,6 +170,16 @@ public class SpotifyService extends Thread implements Callback {
 		case STOP_MSG_ID:
 			stopHandler();
 			break;
+		case CONNECT_MSG_ID:
+		{
+			Bundle bundle = msg.getData();
+			mIpAddress = bundle.getString(TAG_IP_ID);
+			mPort = bundle.getInt(TAG_PORT_ID);
+			connectHandler();
+			break;
+		}
+		case DISCONNECT_MSG_ID:
+			disconnectHandler();
 		default:
 			Log.i(TAG, "spotify service got unknown message");
 			break;
@@ -233,13 +228,29 @@ public class SpotifyService extends Thread implements Callback {
 		msg.setData(bundle);
 		mReqHandler.sendMessage(msg);
 	}	
+
+	public void connect(String ip, int port)
+	{
+		Message msg = mReqHandler.obtainMessage(CONNECT_MSG_ID);
+		Bundle bundle = new Bundle();
+		bundle.putString(TAG_IP_ID, ip);
+		bundle.putInt(TAG_PORT_ID, port);
+		msg.setData(bundle);
+		mReqHandler.sendMessage(msg);		
+	}
 	
+	public void disconnect()
+	{
+		Message msg = mReqHandler.obtainMessage(DISCONNECT_MSG_ID);
+		mReqHandler.sendMessage(msg);
+	}
+		
 	private void syncHandler()
 	{
 		Log.i(TAG, "spotify service got sync message");
 		
 		if ( mSocket == null ) {
-			connect();
+			connectHandler();
 		}
 		
 		if ( !mSocket.isConnected() ) {
@@ -262,7 +273,7 @@ public class SpotifyService extends Thread implements Callback {
 		Log.i(TAG, "spotify service got play message");
 		
 		if ( mSocket == null ) {
-			connect();
+			connectHandler();
 		}
 		
 		if ( !mSocket.isConnected() ) {
@@ -293,7 +304,7 @@ public class SpotifyService extends Thread implements Callback {
 		Log.i(TAG, "spotify service got play message");
 		
 		if ( mSocket == null ) {
-			connect();
+			connectHandler();
 		}
 		
 		if ( !mSocket.isConnected() ) {
@@ -316,7 +327,7 @@ public class SpotifyService extends Thread implements Callback {
 		Log.i(TAG, "spotify service got play message");
 		
 		if ( mSocket == null ) {
-			connect();
+			connectHandler();
 		}
 		
 		if ( !mSocket.isConnected() ) {
@@ -339,7 +350,7 @@ public class SpotifyService extends Thread implements Callback {
 		Log.i(TAG, "spotify service got play message");
 		
 		if ( mSocket == null ) {
-			connect();
+			connectHandler();
 		}
 		
 		if ( !mSocket.isConnected() ) {
@@ -362,7 +373,7 @@ public class SpotifyService extends Thread implements Callback {
 		Log.i(TAG, "spotify service got play message");
 		
 		if ( mSocket == null ) {
-			connect();
+			connectHandler();
 		}
 		
 		if ( !mSocket.isConnected() ) {
@@ -380,18 +391,34 @@ public class SpotifyService extends Thread implements Callback {
 			Log.i(TAG, "spotify service write failed");
 		}
 	}
-		
-/*	
-	public Message obtainMessage() {
-		return mRequestHandler.obtainMessage();
+
+	public void connectHandler()
+	{
+		try {
+			mSocket = new Socket();
+			mSocket.connect(new InetSocketAddress(mIpAddress, mPort));
+		}
+		catch(IOException ex) {
+			Log.e(TAG, "socket connect failed");
+		}
+	}
+	
+	public void disconnectHandler() 
+	{
+		try 
+		{
+			if ( mSocket.isConnected() ) {
+				mSocket.close();
+				mSocket = null;
+			}
+		}
+		catch(IOException ex) {
+			Log.e(TAG, "socket close failed");
+		}
 	}
 
-	public void sendMessage(Message msg) {
-		mRequestHandler.sendMessage(msg);
-	}
-*/	
-
-	private void syncResponseHandler(JSONObject json) {
+	private void syncResponseHandler(JSONObject json) 
+	{
 		JSONArray result = json.optJSONArray("result");
 		if ( result != null ) {
 			for ( int i=0; i<result.length(); i++ ) {

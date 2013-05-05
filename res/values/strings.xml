@@ -12,5 +12,13 @@
     <string name="action_artists">Artists</string>
     <string name="action_playlists">Playlists</string>
 	<string name="action_ctx_play">Play</string>
+
+	<string name="title_activity_settings">Settings</string>
 	
+    <!-- Preferences -->
+    <string name="pref_server_ip">Server IP Address</string>
+    <string name="pref_server_ip_default">192.168.1.100</string>
+    <string name="pref_server_port">Server IP Address</string>
+    <string name="pref_server_port_default">8081</string>	
+		
 </resources>

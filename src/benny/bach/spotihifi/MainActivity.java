@@ -4,11 +4,14 @@ import java.util.ArrayList;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Handler.Callback;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -79,7 +82,13 @@ public class MainActivity extends Activity implements Callback {
 	    getFragmentManager().beginTransaction()
 			.remove(mPlaylistListFragment)
 			.commit(); 
+	   
+	    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
 	    
+	    String ip = sp.getString(SettingsActivity.SERVER_IP, "");
+	    String port = sp.getString(SettingsActivity.SERVER_PORT, "8081");
+	    
+	    mSpotify.connect(ip, Integer.parseInt(port));
 	    mSpotify.sync();
 	}	
 	
@@ -141,7 +150,11 @@ public class MainActivity extends Activity implements Callback {
 		                .commit();
         	}
         	return true;
-
+        case R.id.action_settings:
+            Intent settings = new Intent(this, SettingsActivity.class);
+            //startActivityForResult(i, RESULT_SETTINGS);
+            startActivity(settings);
+            return true;
         default:
         	Log.i(TAG, "go " + item.getItemId());
             return super.onOptionsItemSelected(item);
