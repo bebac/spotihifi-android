@@ -1,0 +1,57 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/action_settings"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="@string/action_settings"/>
+
+    <item
+        android:id="@+id/action_play"
+        android:orderInCategory="99"
+        android:showAsAction="never"
+        android:title="@string/action_play"/>
+
+    <item
+        android:id="@+id/action_play_all"
+        android:orderInCategory="99"
+        android:showAsAction="never"
+        android:title="@string/action_play_all"/>
+    
+    <item
+        android:id="@+id/action_pause"
+        android:orderInCategory="99"
+        android:showAsAction="never"
+        android:title="@string/action_pause"/>
+
+    <item
+        android:id="@+id/action_skip"
+        android:orderInCategory="99"
+        android:showAsAction="never"
+        android:title="@string/action_skip"/>
+        
+    <item
+        android:id="@+id/action_stop"
+        android:orderInCategory="99"
+        android:showAsAction="never"
+        android:title="@string/action_stop"/>
+    
+    <item 
+    	android:id="@+id/action_playlists" 
+    	android:orderInCategory="99" 
+    	android:showAsAction="ifRoom|withText" 
+    	android:title="@string/action_playlists"/>
+    
+    <item 
+    	android:id="@+id/action_artists" 
+    	android:orderInCategory="98" 
+    	android:showAsAction="ifRoom|withText" 
+    	android:title="@string/action_artists"/>
+
+    <item 
+    	android:id="@+id/action_songs" 
+    	android:orderInCategory="97" 
+    	android:showAsAction="ifRoom|withText" 
+    	android:title="@string/action_songs"/>
+
+</menu>
