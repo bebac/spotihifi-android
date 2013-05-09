@@ -22,7 +22,8 @@ public class SpotifyService extends Thread implements Callback {
 	private static final String TAG = "SpotifyService";
 	
 	public static final int SYNC_MSG_ID = 1;
-	public static final int SYNC_COMPLETE_MSG_ID = 2;
+	public static final int SYNC_COMPLETE_NO_CHANGE_MSG_ID = 2;
+	public static final int SYNC_COMPLETE_RELOAD_MSG_ID = 21;
 	public static final int PLAY_MSG_ID = 3;
 	public static final int PAUSE_MSG_ID = 4;
 	public static final int QUEUE_MSG_ID = 5;
@@ -46,10 +47,16 @@ public class SpotifyService extends Thread implements Callback {
 	private String mIpAddress;
 	private int mPort;
 	
+	// TODO: Should probably be in SongDatabase.
+	private long mIncarnation;
+	private long mTransaction;
+	
 	public SpotifyService(Handler handler, SongDatabase db) 
 	{
 		mResHandler = handler;
 		mDb = db;
+		mIncarnation = -1;
+		mTransaction = -1;
 		
 		HandlerThread handlerThread = new HandlerThread("SpotifyServiceHandler");
         handlerThread.start();
@@ -259,7 +266,10 @@ public class SpotifyService extends Thread implements Callback {
 		}
 	
 		try {			
-			String msg = "{\"jsonrpc\":\"2.0\", \"method\":\"sync\",\"params\":[],\"id\":1}"; 
+			String msg = "{\"jsonrpc\":\"2.0\", \"method\":\"sync\",\"params\":{" +
+					"\"incarnation\":\"" + Long.toString(mIncarnation, 10) + "\"," +
+					"\"transaction\":\"" + Long.toString(mTransaction, 10) + "\"}," +
+					"\"id\":1}"; 
 
 			sendRequest(msg);
 		}
@@ -419,35 +429,64 @@ public class SpotifyService extends Thread implements Callback {
 
 	private void syncResponseHandler(JSONObject json) 
 	{
-		JSONArray result = json.optJSONArray("result");
-		if ( result != null ) {
-			for ( int i=0; i<result.length(); i++ ) {
-				JSONObject song = result.optJSONObject(i);
-				if ( song != null ) {
-					try {
-						String title = song.getString("title");
-						String artist = song.getString("artist");
-						String album = song.getString("album");
-						int track_number = song.getInt("track_number");
-						String track_id = song.getString("track_id");
-						JSONArray playlists = song.getJSONArray("playlists");
-						
-						mDb.insertSong(title, artist, album, track_number, track_id, playlists.toString());
-					}
-					catch(JSONException ex) {
-						Log.e(TAG, "invalid song");
+		JSONObject result = json.optJSONObject("result");
+		
+		if ( result != null )
+		{
+			long incarnation = Long.parseLong(result.optString("incarnation", "-1"));
+			long transaction = Long.parseLong(result.optString("transaction", "-1"));
+			
+			if ( incarnation == mIncarnation )
+			{
+				// TODO: Handle transaction. For now assume nothing has changed.
+				Log.i(TAG, "sync result - nothing changed");
+				Message msg = mResHandler.obtainMessage(SYNC_COMPLETE_NO_CHANGE_MSG_ID);
+				mResHandler.sendMessage(msg);			
+			}
+			else 
+			{
+				// Rebuild database.
+				JSONArray tracks = result.optJSONArray("tracks");
+				if ( tracks != null ) 
+				{
+					for ( int i=0; i<tracks.length(); i++ ) 
+					{
+						JSONObject song = tracks.optJSONObject(i);
+						if ( song != null ) {
+							try 
+							{
+								String title = song.getString("title");
+								String artist = song.getString("artist");
+								String album = song.getString("album");
+								int track_number = song.getInt("track_number");
+								String track_id = song.getString("track_id");
+								JSONArray playlists = song.getJSONArray("playlists");
+								
+								mDb.insertSong(title, artist, album, track_number, track_id, playlists.toString());
+							}
+							catch(JSONException ex) {
+								Log.e(TAG, "invalid song");
+							}
+						}
+						else {
+							Log.e(TAG, "song is null");
+						}
 					}
 				}
 				else {
-					Log.e(TAG, "song is null");
+					Log.e(TAG, "sync result has no tracks");
 				}
-			}
-			Message msg = mResHandler.obtainMessage(SYNC_COMPLETE_MSG_ID);
-			mResHandler.sendMessage(msg);			
+				
+				mIncarnation = incarnation;
+				mTransaction = transaction;
+				
+				Message msg = mResHandler.obtainMessage(SYNC_COMPLETE_RELOAD_MSG_ID);
+				mResHandler.sendMessage(msg);							
+			}			
 		}
 		else {
-			Log.e(TAG, "result is not an array");
-		}
+			Log.e(TAG, "sync result == null");
+		}		
 	}
 	
 	private void sendRequest(String msg) throws IOException

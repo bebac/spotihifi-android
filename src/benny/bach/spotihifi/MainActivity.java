@@ -165,10 +165,11 @@ public class MainActivity extends Activity implements Callback {
 	public boolean handleMessage(Message msg) {
 		switch ( msg.what )
 		{
-		case SpotifyService.SYNC_COMPLETE_MSG_ID:
+		case SpotifyService.SYNC_COMPLETE_RELOAD_MSG_ID:
 			// Hmmm - For now create a new track list fragment and show it.
 			mTrackListFragment = new TrackListFragment();
-
+			// FALL THROUGH INTENDED
+		case SpotifyService.SYNC_COMPLETE_NO_CHANGE_MSG_ID:
 			Log.i(TAG, "Show songs");
 	        getFragmentManager().beginTransaction()
 	                .replace(android.R.id.content, mTrackListFragment)
