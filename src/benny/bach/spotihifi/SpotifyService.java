@@ -187,6 +187,7 @@ public class SpotifyService extends Thread implements Callback {
 		}
 		case DISCONNECT_MSG_ID:
 			disconnectHandler();
+			break;
 		default:
 			Log.i(TAG, "spotify service got unknown message");
 			break;
