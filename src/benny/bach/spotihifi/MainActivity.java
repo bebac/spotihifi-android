@@ -52,6 +52,7 @@ public class MainActivity extends Activity implements Callback {
 		
 		mSpotify.start();
 		//mSpotify.sync();
+		Log.i(TAG, "created");
 	}
 
 	@Override
@@ -71,6 +72,8 @@ public class MainActivity extends Activity implements Callback {
 	    
 	    Toast.makeText(getApplicationContext(), "synchronizing...", Toast.LENGTH_SHORT).show();
 	    
+	    clearBackStack();
+
 	    getFragmentManager().beginTransaction()
         	.remove(mTrackListFragment)
         	.commit();
