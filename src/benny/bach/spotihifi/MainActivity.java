@@ -52,9 +52,11 @@ public class MainActivity extends Activity implements Callback {
 		//mArtistListFragment = new ArtistListFragment();
 		//mPlaylistListFragment = new PlaylistListFragment();
 
-        getFragmentManager().beginTransaction()
-    		.replace(android.R.id.content, new TrackListFragment(), "tracks")
-    		.commit();
+		if ( savedInstanceState == null ) {
+	        getFragmentManager().beginTransaction()
+	    		.replace(android.R.id.content, new TrackListFragment(), "tracks")
+	    		.commit();
+		}
 
 		Log.i(TAG, "created");
 	}
