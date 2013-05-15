@@ -42,7 +42,7 @@ public class SettingsActivity extends Activity implements OnSharedPreferenceChan
     
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
     	Log.i("Settings", "pref changed " + key);
-    	// NOTE: I sure there is a sweeter way to do this.
+    	// NOTE: I am sure there is a sweeter way to do this.
     	if ( key.equals(SERVER_IP) ) {
     		setEditTextSummary(key);
     	}

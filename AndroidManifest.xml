@@ -16,6 +16,14 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
 
+        <provider android:name="SpotiHifiProvider"
+            android:authorities="benny.bach.spotihifi"
+            android:exported="false">
+            <grant-uri-permission android:pathPattern=".*" />
+        </provider>
+
+      	<service android:name=".SpotiHifiService" />
+        
         <activity
             android:name="benny.bach.spotihifi.MainActivity"
             android:label="@string/app_name" >
