@@ -83,7 +83,7 @@ public final class SpotiHifi
 		// Table name.
 		public static final String TABLE_NAME = "playlists";
 		
-		// Tracks table column names.
+		// Playlist table column names.
 		public static final String COLUMN_NAME_ID = "_id";
 		public static final String COLUMN_NAME_TITLE = "title";
 
@@ -118,11 +118,11 @@ public final class SpotiHifi
 		// Table name.
 		public static final String TABLE_NAME = "artists";
 		
-		// Tracks table column names.
+		// Artist table column names.
 		public static final String COLUMN_NAME_ID = "_id";
 		public static final String COLUMN_NAME_ARTIST = "artist";
 
-		// All playlist columns projection.
+		// All artist columns projection.
 		public static final String[] ARTIST_PROJECTION = {
 			COLUMN_NAME_ID,
 			COLUMN_NAME_ARTIST
