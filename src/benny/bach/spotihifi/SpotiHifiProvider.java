@@ -19,8 +19,10 @@ import android.database.MatrixCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Toast;
 
 public class SpotiHifiProvider extends ContentProvider 
 {
@@ -39,6 +41,7 @@ public class SpotiHifiProvider extends ContentProvider
 	private static final int TRACK_ID = 2;
 	private static final int PLAYLISTS = 3;
 	private static final int ARTISTS = 4;
+	private static final int SERVICE_UNAVAILABLE = 5;
 	
 	/////
 	
@@ -124,8 +127,14 @@ public class SpotiHifiProvider extends ContentProvider
             SpotiHifiService.SpotiHifiBinder binder = (SpotiHifiService.SpotiHifiBinder)service;
             mService = (SpotiHifiService)binder.getService();
             
-            // Issue sync request.
-            mService.sync(-1, -1);
+            if ( mService.isConnected() ) {
+            	// Issue sync request.
+            	//mService.sync(-1, -1);
+            	Log.e(TAG, "Should not happen!");
+            }
+            else {
+            	mService.connect();
+            }
             
             mBound = true;
         }
@@ -318,4 +327,28 @@ public class SpotiHifiProvider extends ContentProvider
 		return 0;
 	}
 
+	@Override
+	public Bundle call(String method, String arg, Bundle extras) 
+	{
+		if ( method == "connected" ) 
+		{
+			Toast.makeText(getContext(), "synchronizing...", Toast.LENGTH_SHORT).show();
+			
+			mService.sync(-1, -1);
+		}
+		else if ( method == "disconnected") 
+		{
+			Toast.makeText(getContext(), "connection lost!", Toast.LENGTH_SHORT).show();
+			
+			SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+			
+			db.execSQL("DELETE FROM " + SpotiHifi.Tracks.TABLE_NAME);
+			
+			getContext().getContentResolver().notifyChange(SpotiHifi.Tracks.CONTENT_URI, null);
+			getContext().getContentResolver().notifyChange(SpotiHifi.Playlists.CONTENT_URI, null);
+			getContext().getContentResolver().notifyChange(SpotiHifi.Artists.CONTENT_URI, null);
+		}
+		return null;
+    }
+		
 }

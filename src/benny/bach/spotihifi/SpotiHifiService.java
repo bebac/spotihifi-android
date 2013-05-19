@@ -16,6 +16,7 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -56,16 +57,12 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
 
         // Get the HandlerThread's Looper and use it for our Handler
         mServiceLooper = thread.getLooper();
-        mServiceHandler = new ServiceHandler(mServiceLooper/*, getContentResolver()*/);
+        mServiceHandler = new ServiceHandler(mServiceLooper);
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         sp.registerOnSharedPreferenceChangeListener(this);
 
-	    String ip = sp.getString(SettingsActivity.SERVER_IP, "");
-	    String port = sp.getString(SettingsActivity.SERVER_PORT, "8081");
-
 	    mResultHandler = null;
-        mConn = new SocketConnection(ip, Integer.parseInt(port));
     }
 
     @Override
@@ -112,10 +109,12 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
     {
     	Log.i(TAG, "pref changed " + key);
 
-	    String ip = sp.getString(SettingsActivity.SERVER_IP, "");
-	    String port = sp.getString(SettingsActivity.SERVER_PORT, "8081");
-
-        mConn = new SocketConnection(ip, Integer.parseInt(port));
+    	if ( key.equals("pref_server_ip") || key.equals("pref_server_port") ) {
+    		if ( isConnected() ) {
+    			disconnectHandler();
+    		}
+    		connect();
+    	}
     }
 
     synchronized public void setResultHandler(Handler handler)
@@ -123,10 +122,24 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
     	mResultHandler = handler;
     }
     
+    public boolean isConnected()
+    {
+    	if ( mConn != null ) {
+    		return mConn.isConnected();
+    	}
+    	else {
+    		return false;
+    	}
+    }
+
+	public void connect()
+	{
+		Message msg = mServiceHandler.obtainMessage(SpotiHifi.SERVICE_CONNECT_MSG_ID);
+		mServiceHandler.sendMessage(msg);
+	}    
+    
     public void sync(long incarnation, long transaction)
     {
-    	Toast.makeText(this, "synchronizing...", Toast.LENGTH_SHORT).show();
-
     	//Log.i(TAG, "spotihifi service sync, incarnation=" + incarnation + ", transaction=" + transaction);
 
 		Message msg = mServiceHandler.obtainMessage(SpotiHifi.SYNC_MSG_ID);
@@ -182,6 +195,9 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
         {
     		switch ( msg.what )
     		{
+    		case SpotiHifi.SERVICE_CONNECT_MSG_ID:
+    			connectHandler();
+    			break;
     		case SpotiHifi.SYNC_MSG_ID:
     			syncRequestHandler();
     			break;
@@ -229,6 +245,7 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
 		catch(IOException ex) {
 			//Toast.makeText(this, "sync request error!", Toast.LENGTH_SHORT).show();
 			Log.e(TAG, "sync request error!");
+			disconnectHandler();
 		}
     }
 
@@ -250,6 +267,7 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
 		}
 		catch(IOException ex) {
 			Log.e(TAG, "player play playlist=" + playlist + " request error!");
+			disconnectHandler();
 		}
 	}
     
@@ -265,6 +283,7 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
 		catch(IOException ex) {
 			//Toast.makeText(this, "queue request error!", Toast.LENGTH_SHORT).show();
 			Log.e(TAG, "queue request error!");
+			disconnectHandler();
 		}
 	}
 
@@ -277,6 +296,7 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
 		}
 		catch(IOException ex) {
 			Log.e(TAG, "player stop request error!");
+			disconnectHandler();
 		}
 	}
 
@@ -289,6 +309,7 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
 		}
 		catch(IOException ex) {
 			Log.e(TAG, "player pause request error!");
+			disconnectHandler();
 		}
 	}
 	
@@ -301,7 +322,43 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
 		}
 		catch(IOException ex) {
 			Log.e(TAG, "player skip request error!");
+			disconnectHandler();
 		}
+	}
+	
+	private void connectHandler()
+	{
+		if ( isConnected() ) {
+			return;
+		}
+
+		try
+		{
+	        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+
+		    String ip = sp.getString(SettingsActivity.SERVER_IP, "");
+		    String port = sp.getString(SettingsActivity.SERVER_PORT, "8081");
+
+	        mConn = new SocketConnection(ip, Integer.parseInt(port));
+			mConn.connect();
+
+			getContentResolver().call(Uri.parse("content://benny.bach.spotihifi/service/state"), "connected", null, null);
+		}
+		catch(IOException ex)
+		{
+			Log.e(TAG, "connect failed!");
+		}
+
+	}
+	
+	private void disconnectHandler()
+	{
+		Log.i(TAG, "connection lost!");
+		
+		getContentResolver().call(Uri.parse("content://benny.bach.spotihifi/service/state"), "disconnected", null, null);
+		
+		mConn.close();
+		mConn = null;
 	}
 	
     private void syncResponseHandler(JSONObject object)
@@ -358,6 +415,7 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
 		            getContentResolver().bulkInsert(SpotiHifi.Tracks.CONTENT_URI, values);
 		            getContentResolver().notifyChange(SpotiHifi.Tracks.CONTENT_URI, null);
 		            getContentResolver().notifyChange(SpotiHifi.Playlists.CONTENT_URI, null);
+		            getContentResolver().notifyChange(SpotiHifi.Artists.CONTENT_URI, null);
 				}
 				else {
 					Log.e(TAG, "sync result has no tracks");
@@ -417,12 +475,23 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
     		mSocket.connect(new InetSocketAddress(mIp, mPort));
     		mReceiver.start();
     	}
-
+    	
+    	private void close()
+    	{
+    		try {
+    			mSocket.close();
+    		}
+    		catch(IOException ex) {
+    			Log.e(TAG, "error closing socket");
+    		}
+    	}
+    	
     	public synchronized void sendMessage(String msg) throws IOException
     	{
-    		if ( ! isConnected() ) {
-    			connect();
-    		}
+    		connectHandler();
+    		//if ( ! isConnected() ) {
+    		//	connect();
+    		//}
 
     		BufferedOutputStream out = new BufferedOutputStream(mSocket.getOutputStream());
 
@@ -457,6 +526,7 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
     				}
     				catch(IOException ex) {
     					Log.i(TAG, "receiver receive error");
+    					break;
     				}
     				catch(InterruptedException ex) {
     					Log.i(TAG, "receiver thread interrupted");

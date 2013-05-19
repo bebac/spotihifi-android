@@ -22,6 +22,7 @@ public final class SpotiHifi
 	public static final int PAUSE_MSG_ID = 5;
 	public static final int SKIP_MSG_ID = 6;
 	public static final int RESULT_MSG_ID = 7;
+	public static final int SERVICE_CONNECT_MSG_ID = 8;
 	
 	/////
 	// Track table contract.
