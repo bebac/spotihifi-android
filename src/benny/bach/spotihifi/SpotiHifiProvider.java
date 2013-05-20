@@ -41,7 +41,7 @@ public class SpotiHifiProvider extends ContentProvider
 	private static final int TRACK_ID = 2;
 	private static final int PLAYLISTS = 3;
 	private static final int ARTISTS = 4;
-	private static final int SERVICE_UNAVAILABLE = 5;
+	private static final int PLAYER_STATE = 5;
 	
 	/////
 	
@@ -63,6 +63,7 @@ public class SpotiHifiProvider extends ContentProvider
 		sUriMatcher.addURI(SpotiHifi.AUTHORITY, "tracks/#", TRACK_ID);
 		sUriMatcher.addURI(SpotiHifi.AUTHORITY, "playlists", PLAYLISTS);
 		sUriMatcher.addURI(SpotiHifi.AUTHORITY, "artists", ARTISTS);
+		sUriMatcher.addURI(SpotiHifi.AUTHORITY, "state", PLAYER_STATE);
 		
 		/////
     }
@@ -97,6 +98,16 @@ public class SpotiHifiProvider extends ContentProvider
 			        + SpotiHifi.Tracks.COLUMN_NAME_TRACK_NUMBER + ","
 			        + SpotiHifi.Tracks.COLUMN_NAME_TRACK_ID + " UNIQUE,"
 			        + SpotiHifi.Tracks.COLUMN_NAME_PLAYLISTS + ");");
+			
+			db.execSQL("CREATE TABLE " + SpotiHifi.PlayerState.TABLE_NAME + " (" 
+			        + SpotiHifi.PlayerState.COLUMN_NAME_ID + " INTEGER PRIMARY KEY,"
+			        + SpotiHifi.PlayerState.COLUMN_NAME_TITLE + ","
+			        + SpotiHifi.PlayerState.COLUMN_NAME_ARTIST + ","
+			        + SpotiHifi.PlayerState.COLUMN_NAME_ALBUM + ","			   
+			        + SpotiHifi.PlayerState.COLUMN_NAME_STATE + ");");
+			
+			// Create the one and only player state row.
+			db.execSQL("INSERT INTO " + SpotiHifi.PlayerState.TABLE_NAME + " VALUES (0,\"-\",\"-\",\"-\",\"-\");");
 		}
 
 		@Override
@@ -166,7 +177,7 @@ public class SpotiHifiProvider extends ContentProvider
 	{
         switch (sUriMatcher.match(uri)) 
         {
-        case 1:
+        case TRACKS:
         {
         	Log.i(TAG, "query tracks");
         	
@@ -186,7 +197,7 @@ public class SpotiHifiProvider extends ContentProvider
         	
         	return c;
         }
-        case 2:
+        case TRACK_ID:
         {
         	SQLiteDatabase db = mOpenHelper.getReadableDatabase();
         	
@@ -204,7 +215,7 @@ public class SpotiHifiProvider extends ContentProvider
         	
         	return c;        	
         }
-        case 3:
+        case PLAYLISTS:
         {
         	SQLiteDatabase db = mOpenHelper.getReadableDatabase();
         	
@@ -221,7 +232,7 @@ public class SpotiHifiProvider extends ContentProvider
             Set<String> values = new HashSet<String>();
             
             if (c_ == null || !c_.moveToFirst()) {
-            	Log.i("kfjdk", "hmmm no playlists");
+            	Log.i(TAG, "hmmm no playlists");
             }
             else {
             	while(!c_.isAfterLast()) 
@@ -252,7 +263,7 @@ public class SpotiHifiProvider extends ContentProvider
         	
         	return c;        	
         }
-        case 4:
+        case ARTISTS:
         {
             SQLiteDatabase db = mOpenHelper.getReadableDatabase();
 
@@ -272,7 +283,7 @@ public class SpotiHifiProvider extends ContentProvider
             
             int i = 0;
             if (c_ == null || !c_.moveToFirst()) {
-            	Log.i("kfjdk", "hmmm not artists");
+            	Log.i(TAG, "hmmm no artists");
             }
             else {
             	while(!c_.isAfterLast()) {
@@ -284,6 +295,24 @@ public class SpotiHifiProvider extends ContentProvider
             c.setNotificationUri(getContext().getContentResolver(), uri);
             
             return c;
+        }
+        case PLAYER_STATE:
+        {
+        	SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+        	
+        	Cursor c = db.query(
+        			SpotiHifi.PlayerState.TABLE_NAME, 
+        			projection, 
+        			null, 
+        			null, 
+        			null, 
+        			null, 
+        			null
+        		);
+        	
+        	c.setNotificationUri(getContext().getContentResolver(), uri);
+        	
+        	return c;
         }
         default:
             // If the URI is not recognized, you should do some error handling here.
@@ -321,9 +350,16 @@ public class SpotiHifiProvider extends ContentProvider
 	}
 
 	@Override
-	public int update(Uri uri, ContentValues values, String selection,
-			String[] selectionArgs) {
-		// TODO Auto-generated method stub
+	public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs)
+	{
+        if (sUriMatcher.match(uri) != PLAYER_STATE) {
+            throw new IllegalArgumentException("Unknown URI " + uri);
+        }
+
+    	SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+   	 
+    	db.update(SpotiHifi.PlayerState.TABLE_NAME, values, SpotiHifi.PlayerState.COLUMN_NAME_ID + "=0", null);
+
 		return 0;
 	}
 

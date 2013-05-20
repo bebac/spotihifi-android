@@ -433,6 +433,66 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
 		}
     }
 
+    private void playbackEventHandler(JSONObject object)
+    {
+    	JSONObject params = object.optJSONObject("params");
+    	
+    	if ( params != null )
+    	{
+    		Log.i(TAG, params.toString());
+    		
+    		String state = params.optString("state");
+    		
+    		ContentValues values = new ContentValues();
+    		
+    		if ( state.equals("playing") )
+    		{
+    			//ContentValues values = new ContentValues();
+    			
+    			JSONObject track = params.optJSONObject("track");
+    			
+    			if ( track != null )
+    			{
+		        	values.put(SpotiHifi.Tracks.COLUMN_NAME_TITLE, track.optString("title", ""));
+		        	values.put(SpotiHifi.Tracks.COLUMN_NAME_ARTIST, track.optString("artist", ""));
+		        	values.put(SpotiHifi.Tracks.COLUMN_NAME_ALBUM, track.optString("album", ""));
+    			}
+    			
+    			values.put(SpotiHifi.PlayerState.COLUMN_NAME_STATE, "Playing");
+    			
+    			getContentResolver().update(SpotiHifi.PlayerState.CONTENT_URI, values, null, null);
+    			getContentResolver().notifyChange(SpotiHifi.PlayerState.CONTENT_URI, null);
+    		}
+    		else if ( state.equals("paused") ) 
+    		{
+    			values.put(SpotiHifi.PlayerState.COLUMN_NAME_STATE, "Paused");
+    		}
+    		else if ( state.equals("stopped") ) 
+    		{
+	        	values.put(SpotiHifi.Tracks.COLUMN_NAME_TITLE, "-");
+	        	values.put(SpotiHifi.Tracks.COLUMN_NAME_ARTIST, "-");
+	        	values.put(SpotiHifi.Tracks.COLUMN_NAME_ALBUM, "-");
+    			values.put(SpotiHifi.PlayerState.COLUMN_NAME_STATE, "Stopped");
+    		}
+    		else if ( state.equals("skip") ) 
+    		{
+	        	values.put(SpotiHifi.Tracks.COLUMN_NAME_TITLE, "-");
+	        	values.put(SpotiHifi.Tracks.COLUMN_NAME_ARTIST, "-");
+	        	values.put(SpotiHifi.Tracks.COLUMN_NAME_ALBUM, "-");
+    			values.put(SpotiHifi.PlayerState.COLUMN_NAME_STATE, "Skipping");
+    		}
+    		else {
+    			values.put(SpotiHifi.PlayerState.COLUMN_NAME_STATE, "<unknown>");
+    		}
+    		
+			getContentResolver().update(SpotiHifi.PlayerState.CONTENT_URI, values, null, null);
+			getContentResolver().notifyChange(SpotiHifi.PlayerState.CONTENT_URI, null);
+    	}
+    	else {
+    		Log.e(TAG, "playback event params == null");
+    	}
+    }    
+    
     void responseHandler(JSONObject object)
     {
     	if ( mResultHandler != null ) 
@@ -587,8 +647,15 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
 						Log.i(TAG, "result:" + object.toString());
 						responseHandler(object);
 					}
-					else {
-						Log.i(TAG, "result:" + object.toString());
+					else 
+					{
+						String method = object.optString("method");
+						
+						if ( method.equals("pb-event") ) {
+							playbackEventHandler(object);
+						} else {
+							Log.i(TAG, "result:" + object.toString());
+						}
 					}
 
 				}

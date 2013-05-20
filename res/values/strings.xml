@@ -11,6 +11,7 @@
     <string name="action_songs">Songs</string>
     <string name="action_artists">Artists</string>
     <string name="action_playlists">Playlists</string>
+    <string name="action_info">Info</string>
 	<string name="action_ctx_play">Play</string>
 
 	<string name="title_activity_settings">Settings</string>

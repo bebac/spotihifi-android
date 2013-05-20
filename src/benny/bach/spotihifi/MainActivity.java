@@ -32,6 +32,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.CursorAdapter;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity implements Callback {
@@ -168,6 +169,11 @@ public class MainActivity extends Activity implements Callback {
         		.replace(android.R.id.content, new PlaylistListFragment(), "playlists")
         		.commit();
 
+        	return true;
+        case R.id.action_info:
+        	getFragmentManager().beginTransaction()
+        		.replace(android.R.id.content, new PlayerFragment(), "info")
+        		.commit();
         	return true;
         case R.id.action_settings:
             Intent settings = new Intent(this, SettingsActivity.class);
@@ -732,6 +738,121 @@ public class MainActivity extends Activity implements Callback {
 			String value = cursor.getString(cursor.getColumnIndex(SpotiHifi.Playlists.COLUMN_NAME_TITLE));
 
 			return value;
+	    }
+	}
+
+	
+	
+	///////////////////////////////////////////////////////////////////////////
+	// PlayerFragment
+	//
+
+	public static class PlayerFragment extends Fragment
+			implements LoaderManager.LoaderCallbacks<Cursor>
+	{
+		private static final String TAG = "PlayerFragment";
+
+	    private MainActivity mActivity;
+
+		public PlayerFragment() {
+		}
+
+		@Override
+		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+		{
+			View rootView = inflater.inflate(R.layout.fragment_player, container, false);
+			return rootView;
+		}
+
+		@Override
+		public void onActivityCreated (Bundle savedInstanceState)
+		{
+			super.onActivityCreated(savedInstanceState);
+			Log.i(TAG, "PlayerFragment: activity created");
+
+			mActivity = (MainActivity)getActivity();
+
+			getLoaderManager().initLoader(3, null, this);
+		}
+
+
+		//@Override
+	    //public void onAttach(Activity activity)
+		//{
+		//	super.onAttach(activity);
+		//	Log.i(TAG, "PlayerFragment: attach");
+		//}
+
+		//@Override
+	    //public void onDetach()
+		//{
+		//	super.onDetach();
+		//	Log.i(TAG, "PlayerFragment: detach");
+		//}
+
+		//@Override
+		//public void onResume()
+		//{
+		//	super.onResume();
+		//}
+
+		//@Override
+		//public void onPause()
+		//{
+		//	super.onPause();
+		//	Log.i(TAG, "PlayerFragment: pause");
+		//}
+
+		//@Override
+		//public void onDestroyView()
+		//{
+		//	super.onDestroyView();
+		//	Log.i(TAG, "PlayerFragment: destroy view");
+		//}
+
+		//@Override
+		//public void onDestroy()
+		//{
+		//	super.onDestroy();
+		//	Log.i(TAG, "PlayerFragment: destroy");
+		//}
+
+		public Loader<Cursor> onCreateLoader(int id, Bundle args)
+		{
+			 return new CursorLoader(
+					 getActivity(),
+					 SpotiHifi.PlayerState.CONTENT_URI,
+		             SpotiHifi.PlayerState.PLAYER_STATE_PROJECTION,
+		             null,
+		             null,
+		             null);
+		}
+
+	    public void onLoadFinished(Loader<Cursor> loader, Cursor data) 
+	    {
+	    	if ( data == null || !data.moveToFirst() ) {
+	    		Log.e(TAG, "player state table appears to be empty!");
+	    	}
+	    	else 
+	    	{
+	    		TextView tv1 = (TextView) getActivity().findViewById(R.id.state1);
+	    		TextView tv2 = (TextView) getActivity().findViewById(R.id.state2);
+	    		TextView tv3 = (TextView) getActivity().findViewById(R.id.state3);
+	    		
+	    		String title = data.getString(data.getColumnIndex(SpotiHifi.PlayerState.COLUMN_NAME_TITLE));
+	    		String artist = data.getString(data.getColumnIndex(SpotiHifi.PlayerState.COLUMN_NAME_ARTIST));
+	    	    String album = data.getString(data.getColumnIndex(SpotiHifi.PlayerState.COLUMN_NAME_ALBUM));
+	    		String state = data.getString(data.getColumnIndex(SpotiHifi.PlayerState.COLUMN_NAME_STATE));
+	    	    
+	    		tv1.setText(title);
+	    		tv2.setText(artist + " - " + album);
+	    		tv3.setText(state);
+	    	}
+	    }
+
+	    public void onLoaderReset(Loader<Cursor> loader) 
+	    {
+	        // TODO: Clear view.
 	    }
 	}
 

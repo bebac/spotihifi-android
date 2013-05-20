@@ -41,6 +41,12 @@
     	android:orderInCategory="99" 
     	android:showAsAction="ifRoom|withText" 
     	android:title="@string/action_playlists"/>
+
+    <item 
+    	android:id="@+id/action_info" 
+    	android:orderInCategory="99" 
+    	android:showAsAction="ifRoom|withText" 
+    	android:title="@string/action_info"/>
     
     <item 
     	android:id="@+id/action_artists" 

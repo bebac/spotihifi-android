@@ -140,5 +140,47 @@ public final class SpotiHifi
 		
 		public static final Uri CONTENT_URI =  Uri.parse(SCHEME + AUTHORITY + PATH_ARTISTS);
 	}
+
+	/////
+	// Player state table contract.
+	//
+	
+	public static final class PlayerState implements BaseColumns
+	{
+		// Prevent instantiation.
+		private PlayerState() {}
+		
+		// Table name.
+		public static final String TABLE_NAME = "state";
+		
+		// PlayerState table column names.
+		public static final String COLUMN_NAME_ID = "_id";
+		public static final String COLUMN_NAME_TITLE = "title";
+		public static final String COLUMN_NAME_ARTIST = "artist";
+		public static final String COLUMN_NAME_ALBUM = "album";
+		public static final String COLUMN_NAME_STATE = "state";
+
+		// All artist columns projection.
+		public static final String[] PLAYER_STATE_PROJECTION = {
+			COLUMN_NAME_ID,
+			COLUMN_NAME_TITLE,
+			COLUMN_NAME_ARTIST,
+			COLUMN_NAME_ALBUM,
+			COLUMN_NAME_STATE
+		};
+
+		/////
+		// URIs
+		//
+
+		// Parts.
+		private static final String SCHEME = "content://";
+		private static final String PATH_PLAYER_STATE = "/state";
+
+		public static final int ID_PATH_POSITION = 1;
+		
+		public static final Uri CONTENT_URI =  Uri.parse(SCHEME + AUTHORITY + PATH_PLAYER_STATE);
+	}
+	
 	
 }
