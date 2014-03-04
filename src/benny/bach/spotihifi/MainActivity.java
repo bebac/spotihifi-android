@@ -149,7 +149,7 @@ public class MainActivity extends Activity implements Callback {
 		    //            .replace(android.R.id.content, mArtistListFragment)
 		    //            .commit();
         	//}
-        	
+
         	getFragmentManager().beginTransaction()
     			.replace(android.R.id.content, new ArtistListFragment(), "artists")
     			.commit();
@@ -383,6 +383,7 @@ public class MainActivity extends Activity implements Callback {
 				}
 			});
 
+			lv.setFastScrollAlwaysVisible(true);
 	        lv.setAdapter(mAdapter);
 
 			getLoaderManager().initLoader(0, null, this);
@@ -450,7 +451,7 @@ public class MainActivity extends Activity implements Callback {
 	}
 
 
-	
+
 	///////////////////////////////////////////////////////////////////////////
 	// ArtistListFragment
 	//
@@ -593,9 +594,9 @@ public class MainActivity extends Activity implements Callback {
 
 			return value;
 	    }
-	}	
+	}
 
-	
+
 
 	///////////////////////////////////////////////////////////////////////////
 	// PlaylistListFragment
@@ -741,8 +742,8 @@ public class MainActivity extends Activity implements Callback {
 	    }
 	}
 
-	
-	
+
+
 	///////////////////////////////////////////////////////////////////////////
 	// PlayerFragment
 	//
@@ -828,29 +829,29 @@ public class MainActivity extends Activity implements Callback {
 		             null);
 		}
 
-	    public void onLoadFinished(Loader<Cursor> loader, Cursor data) 
+	    public void onLoadFinished(Loader<Cursor> loader, Cursor data)
 	    {
 	    	if ( data == null || !data.moveToFirst() ) {
 	    		Log.e(TAG, "player state table appears to be empty!");
 	    	}
-	    	else 
+	    	else
 	    	{
 	    		TextView tv1 = (TextView) getActivity().findViewById(R.id.state1);
 	    		TextView tv2 = (TextView) getActivity().findViewById(R.id.state2);
 	    		TextView tv3 = (TextView) getActivity().findViewById(R.id.state3);
-	    		
+
 	    		String title = data.getString(data.getColumnIndex(SpotiHifi.PlayerState.COLUMN_NAME_TITLE));
 	    		String artist = data.getString(data.getColumnIndex(SpotiHifi.PlayerState.COLUMN_NAME_ARTIST));
 	    	    String album = data.getString(data.getColumnIndex(SpotiHifi.PlayerState.COLUMN_NAME_ALBUM));
 	    		String state = data.getString(data.getColumnIndex(SpotiHifi.PlayerState.COLUMN_NAME_STATE));
-	    	    
+
 	    		tv1.setText(title);
 	    		tv2.setText(artist + " - " + album);
 	    		tv3.setText(state);
 	    	}
 	    }
 
-	    public void onLoaderReset(Loader<Cursor> loader) 
+	    public void onLoaderReset(Loader<Cursor> loader)
 	    {
 	        // TODO: Clear view.
 	    }
