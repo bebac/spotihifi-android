@@ -317,7 +317,35 @@ public class MainActivity extends Activity implements Callback {
 	    }
 	};
 
+	///////////////////////////////////////////////////////////////////////////
+	// TrackListCursorAdapter
+	//
+	
+    static public class TrackListCursorAdapter extends CursorAdapter {
 
+        public TrackListCursorAdapter(Context context, Cursor c) {
+            super(context, c, FLAG_REGISTER_CONTENT_OBSERVER);
+        }
+
+        @Override
+        public void bindView(View view, Context context, Cursor cursor) {
+            TextView title = (TextView) view.findViewById(R.id.song_title);
+            title.setText(cursor.getString(cursor.getColumnIndex(SpotiHifi.Tracks.COLUMN_NAME_TITLE)));
+
+            TextView artist_n_album = (TextView) view.findViewById(R.id.song_artist);
+
+            String artist = cursor.getString(cursor.getColumnIndex(SpotiHifi.Tracks.COLUMN_NAME_ARTIST));
+            String album = cursor.getString(cursor.getColumnIndex(SpotiHifi.Tracks.COLUMN_NAME_ALBUM));
+
+            artist_n_album.setText(artist + "   \u2022   " + album);
+        }
+
+        public View newView(Context context, Cursor cursor, ViewGroup parent) {
+            // Inflate your view here.
+            LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+            return inflater.inflate(R.layout.song, parent, false);
+        }
+    }
 
 	///////////////////////////////////////////////////////////////////////////
 	// TrackListFragment
@@ -331,7 +359,8 @@ public class MainActivity extends Activity implements Callback {
 	    private static final String[] PROJECTION = new String[] {
             SpotiHifi.Tracks.COLUMN_NAME_ID, // 0
             SpotiHifi.Tracks.COLUMN_NAME_TITLE, // 1
-            SpotiHifi.Tracks.COLUMN_NAME_ARTIST // 2
+            SpotiHifi.Tracks.COLUMN_NAME_ARTIST, // 2
+            SpotiHifi.Tracks.COLUMN_NAME_ALBUM // 3
 	    };
 
 	    private CursorAdapter mAdapter;
@@ -357,11 +386,8 @@ public class MainActivity extends Activity implements Callback {
 			super.onActivityCreated(savedInstanceState);
 			Log.i(TAG, "TrackListFragment: activity created");
 
-			String[] from = { SpotiHifi.Tracks.COLUMN_NAME_TITLE, SpotiHifi.Tracks.COLUMN_NAME_ARTIST };
-	        int[] to = { R.id.song_title, R.id.song_artist };
-
-			mAdapter = new SimpleCursorAdapter(getActivity(), R.layout.song, null, from, to, SimpleCursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
-
+			mAdapter = new TrackListCursorAdapter(getActivity(), null);
+			
 	        ListView lv = (ListView) getActivity().findViewById(R.id.tracklist);
 
 			lv.setOnItemClickListener(new OnItemClickListener() {
