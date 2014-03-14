@@ -3,184 +3,187 @@ package benny.bach.spotihifi;
 import android.net.Uri;
 import android.provider.BaseColumns;
 
-public final class SpotiHifi 
+public final class SpotiHifi
 {
-	public static final String AUTHORITY = "benny.bach.spotihifi";
-	
-	// Prevent instantiation.
-	private SpotiHifi()
-	{
-	}
-	
-	/////
-	// Message IDs
-	//
-	public static final int SYNC_MSG_ID = 1;
-	public static final int PLAY_MSG_ID = 2;
-	public static final int QUEUE_MSG_ID = 3;
-	public static final int STOP_MSG_ID = 4;
-	public static final int PAUSE_MSG_ID = 5;
-	public static final int SKIP_MSG_ID = 6;
-	public static final int RESULT_MSG_ID = 7;
-	public static final int SERVICE_CONNECT_MSG_ID = 8;
-	
-	/////
-	// Track table contract.
-	//
-	
-	public static final class Tracks implements BaseColumns 
-	{
-		// Prevent instantiation.
-		private Tracks() {}
-		
-		// Table name.
-		public static final String TABLE_NAME = "tracks";
-		
-		// Tracks table column names.
-		public static final String COLUMN_NAME_ID = "_id";
-		public static final String COLUMN_NAME_TITLE = "title";
-		public static final String COLUMN_NAME_ARTIST = "artist";
-		public static final String COLUMN_NAME_ALBUM = "album";
-		public static final String COLUMN_NAME_TRACK_NUMBER = "track_number";
-		public static final String COLUMN_NAME_TRACK_ID = "track_id";
-		public static final String COLUMN_NAME_PLAYLISTS = "playlists";
-		
-		// All track columns projection.
-		public static final String[] TRACK_PROJECTION = {
-			COLUMN_NAME_ID,
-			COLUMN_NAME_TITLE,
-			COLUMN_NAME_ARTIST,
-			COLUMN_NAME_ALBUM,
-			COLUMN_NAME_TRACK_NUMBER,
-			COLUMN_NAME_TRACK_ID,
-			COLUMN_NAME_PLAYLISTS
-		};
-		
-		/////
-		// URIs
-		//
+    public static final String AUTHORITY = "benny.bach.spotihifi";
 
-		// Parts.
-		private static final String SCHEME = "content://";
-		private static final String PATH_TRACKS = "/tracks";
-		private static final String PATH_TRACKS_ID = "/tracks/";
+    // Prevent instantiation.
+    private SpotiHifi()
+    {
+    }
 
-		public static final int ID_PATH_POSITION = 1;
-		
-		public static final Uri CONTENT_URI =  Uri.parse(SCHEME + AUTHORITY + PATH_TRACKS);
-		public static final Uri CONTENT_URI_BASE =  Uri.parse(SCHEME + AUTHORITY + PATH_TRACKS_ID);
-	}
-	
-	/////
-	// Playlist table contract.
-	//
-	
-	public static final class Playlists implements BaseColumns
-	{
-		// Prevent instantiation.
-		private Playlists() {}
-		
-		// Table name.
-		public static final String TABLE_NAME = "playlists";
-		
-		// Playlist table column names.
-		public static final String COLUMN_NAME_ID = "_id";
-		public static final String COLUMN_NAME_TITLE = "title";
+    /////
+    // Message IDs
+    //
+    public static final int SYNC_MSG_ID = 1;
+    public static final int PLAY_MSG_ID = 2;
+    public static final int QUEUE_MSG_ID = 3;
+    public static final int STOP_MSG_ID = 4;
+    public static final int PAUSE_MSG_ID = 5;
+    public static final int SKIP_MSG_ID = 6;
+    public static final int RESULT_MSG_ID = 7;
+    public static final int SERVICE_CONNECT_MSG_ID = 8;
+    public static final int COVER_MSG_ID = 9;
 
-		// All playlist columns projection.
-		public static final String[] PLAYLIST_PROJECTION = {
-			COLUMN_NAME_ID,
-			COLUMN_NAME_TITLE
-		};
+    /////
+    // Track table contract.
+    //
 
-		/////
-		// URIs
-		//
+    public static final class Tracks implements BaseColumns
+    {
+        // Prevent instantiation.
+        private Tracks() {}
 
-		// Parts.
-		private static final String SCHEME = "content://";
-		private static final String PATH_PLAYLISTS = "/playlists";
+        // Table name.
+        public static final String TABLE_NAME = "tracks";
 
-		public static final int ID_PATH_POSITION = 1;
-		
-		public static final Uri CONTENT_URI =  Uri.parse(SCHEME + AUTHORITY + PATH_PLAYLISTS);
-	}
+        // Tracks table column names.
+        public static final String COLUMN_NAME_ID = "_id";
+        public static final String COLUMN_NAME_TITLE = "title";
+        public static final String COLUMN_NAME_ARTIST = "artist";
+        public static final String COLUMN_NAME_ALBUM = "album";
+        public static final String COLUMN_NAME_TRACK_NUMBER = "track_number";
+        public static final String COLUMN_NAME_TRACK_ID = "track_id";
+        public static final String COLUMN_NAME_PLAYLISTS = "playlists";
 
-	/////
-	// Artist table contract.
-	//
-	
-	public static final class Artists implements BaseColumns
-	{
-		// Prevent instantiation.
-		private Artists() {}
-		
-		// Table name.
-		public static final String TABLE_NAME = "artists";
-		
-		// Artist table column names.
-		public static final String COLUMN_NAME_ID = "_id";
-		public static final String COLUMN_NAME_ARTIST = "artist";
+        // All track columns projection.
+        public static final String[] TRACK_PROJECTION = {
+            COLUMN_NAME_ID,
+            COLUMN_NAME_TITLE,
+            COLUMN_NAME_ARTIST,
+            COLUMN_NAME_ALBUM,
+            COLUMN_NAME_TRACK_NUMBER,
+            COLUMN_NAME_TRACK_ID,
+            COLUMN_NAME_PLAYLISTS
+        };
 
-		// All artist columns projection.
-		public static final String[] ARTIST_PROJECTION = {
-			COLUMN_NAME_ID,
-			COLUMN_NAME_ARTIST
-		};
+        /////
+        // URIs
+        //
 
-		/////
-		// URIs
-		//
+        // Parts.
+        private static final String SCHEME = "content://";
+        private static final String PATH_TRACKS = "/tracks";
+        private static final String PATH_TRACKS_ID = "/tracks/";
 
-		// Parts.
-		private static final String SCHEME = "content://";
-		private static final String PATH_ARTISTS = "/artists";
+        public static final int ID_PATH_POSITION = 1;
 
-		public static final int ID_PATH_POSITION = 1;
-		
-		public static final Uri CONTENT_URI =  Uri.parse(SCHEME + AUTHORITY + PATH_ARTISTS);
-	}
+        public static final Uri CONTENT_URI =  Uri.parse(SCHEME + AUTHORITY + PATH_TRACKS);
+        public static final Uri CONTENT_URI_BASE =  Uri.parse(SCHEME + AUTHORITY + PATH_TRACKS_ID);
+    }
 
-	/////
-	// Player state table contract.
-	//
-	
-	public static final class PlayerState implements BaseColumns
-	{
-		// Prevent instantiation.
-		private PlayerState() {}
-		
-		// Table name.
-		public static final String TABLE_NAME = "state";
-		
-		// PlayerState table column names.
-		public static final String COLUMN_NAME_ID = "_id";
-		public static final String COLUMN_NAME_TITLE = "title";
-		public static final String COLUMN_NAME_ARTIST = "artist";
-		public static final String COLUMN_NAME_ALBUM = "album";
-		public static final String COLUMN_NAME_STATE = "state";
+    /////
+    // Playlist table contract.
+    //
 
-		// All artist columns projection.
-		public static final String[] PLAYER_STATE_PROJECTION = {
-			COLUMN_NAME_ID,
-			COLUMN_NAME_TITLE,
-			COLUMN_NAME_ARTIST,
-			COLUMN_NAME_ALBUM,
-			COLUMN_NAME_STATE
-		};
+    public static final class Playlists implements BaseColumns
+    {
+        // Prevent instantiation.
+        private Playlists() {}
 
-		/////
-		// URIs
-		//
+        // Table name.
+        public static final String TABLE_NAME = "playlists";
 
-		// Parts.
-		private static final String SCHEME = "content://";
-		private static final String PATH_PLAYER_STATE = "/state";
+        // Playlist table column names.
+        public static final String COLUMN_NAME_ID = "_id";
+        public static final String COLUMN_NAME_TITLE = "title";
 
-		public static final int ID_PATH_POSITION = 1;
-		
-		public static final Uri CONTENT_URI =  Uri.parse(SCHEME + AUTHORITY + PATH_PLAYER_STATE);
-	}
-	
-	
+        // All playlist columns projection.
+        public static final String[] PLAYLIST_PROJECTION = {
+            COLUMN_NAME_ID,
+            COLUMN_NAME_TITLE
+        };
+
+        /////
+        // URIs
+        //
+
+        // Parts.
+        private static final String SCHEME = "content://";
+        private static final String PATH_PLAYLISTS = "/playlists";
+
+        public static final int ID_PATH_POSITION = 1;
+
+        public static final Uri CONTENT_URI =  Uri.parse(SCHEME + AUTHORITY + PATH_PLAYLISTS);
+    }
+
+    /////
+    // Artist table contract.
+    //
+
+    public static final class Artists implements BaseColumns
+    {
+        // Prevent instantiation.
+        private Artists() {}
+
+        // Table name.
+        public static final String TABLE_NAME = "artists";
+
+        // Artist table column names.
+        public static final String COLUMN_NAME_ID = "_id";
+        public static final String COLUMN_NAME_ARTIST = "artist";
+
+        // All artist columns projection.
+        public static final String[] ARTIST_PROJECTION = {
+            COLUMN_NAME_ID,
+            COLUMN_NAME_ARTIST
+        };
+
+        /////
+        // URIs
+        //
+
+        // Parts.
+        private static final String SCHEME = "content://";
+        private static final String PATH_ARTISTS = "/artists";
+
+        public static final int ID_PATH_POSITION = 1;
+
+        public static final Uri CONTENT_URI =  Uri.parse(SCHEME + AUTHORITY + PATH_ARTISTS);
+    }
+
+    /////
+    // Player state table contract.
+    //
+
+    public static final class PlayerState implements BaseColumns
+    {
+        // Prevent instantiation.
+        private PlayerState() {}
+
+        // Table name.
+        public static final String TABLE_NAME = "state";
+
+        // PlayerState table column names.
+        public static final String COLUMN_NAME_ID = "_id";
+        public static final String COLUMN_NAME_TITLE = "title";
+        public static final String COLUMN_NAME_ARTIST = "artist";
+        public static final String COLUMN_NAME_ALBUM = "album";
+        public static final String COLUMN_NAME_STATE = "state";
+        public static final String COLUMN_NAME_COVER_ART = "cover_art";
+
+        // All player state columns projection.
+        public static final String[] PLAYER_STATE_PROJECTION = {
+            COLUMN_NAME_ID,
+            COLUMN_NAME_TITLE,
+            COLUMN_NAME_ARTIST,
+            COLUMN_NAME_ALBUM,
+            COLUMN_NAME_STATE,
+            COLUMN_NAME_COVER_ART
+        };
+
+        /////
+        // URIs
+        //
+
+        // Parts.
+        private static final String SCHEME = "content://";
+        private static final String PATH_PLAYER_STATE = "/state";
+
+        public static final int ID_PATH_POSITION = 1;
+
+        public static final Uri CONTENT_URI =  Uri.parse(SCHEME + AUTHORITY + PATH_PLAYER_STATE);
+    }
+
+
 }
