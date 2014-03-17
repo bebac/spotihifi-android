@@ -28,7 +28,6 @@ import android.os.Process;
 import android.preference.PreferenceManager;
 import android.util.Base64;
 import android.util.Log;
-import android.widget.Toast;
 
 public class SpotiHifiService extends Service implements OnSharedPreferenceChangeListener
 {
@@ -236,15 +235,23 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
     {
         try
         {
-            String rawMsg = "{\"jsonrpc\":\"2.0\", \"method\":\"sync\",\"params\":{" +
-                    "\"incarnation\":\"" + Long.toString(-1, 10) + "\"," +
-                    "\"transaction\":\"" + Long.toString(-1, 10) + "\"}," +
-                    "\"id\":" + SpotiHifi.SYNC_MSG_ID + "}";
+            JSONObject msg = new JSONObject();
+            JSONObject params = new JSONObject();
 
-            mConn.sendMessage(rawMsg);
+            params.put("incarnation", Long.toString(-1, 10));
+            params.put("transaction", Long.toString(-1, 10));
+
+            msg.put("jsonrpc", "2.0");
+            msg.put("method", "sync");
+            msg.put("params", params);
+            msg.put("id", SpotiHifi.SYNC_MSG_ID);
+
+            mConn.sendMessage(msg.toString());
+        }
+        catch(JSONException ex) {
+            Log.e(TAG, "play request json error!");
         }
         catch(IOException ex) {
-            //Toast.makeText(this, "sync request error!", Toast.LENGTH_SHORT).show();
             Log.e(TAG, "sync request error!");
             disconnectHandler();
         }
@@ -253,18 +260,29 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
     private void playHandler(String playlist)
     {
         try {
-            String msg = "{\"jsonrpc\":\"2.0\", \"method\":\"play\",";
+            JSONObject msg = new JSONObject();
+
+            msg.put("jsonrpc", "2.0");
+            msg.put("method", "play");
+
             if ( playlist != null ) {
-                msg += "\"params\":{\"playlist\":\"" + playlist + "\"},";
+                JSONObject params = new JSONObject();
+                params.put("playlist", playlist);
+                msg.put("params", params);
             }
             else {
-                msg += "\"params\":[],";
+                JSONArray params = new JSONArray();
+                msg.put("params", params);
             }
-            msg += "\"id\":" + SpotiHifi.PLAY_MSG_ID + "}";
 
-            Log.i(TAG, msg);
+            msg.put("id", SpotiHifi.PLAY_MSG_ID);
 
-            mConn.sendMessage(msg);
+            Log.i(TAG, msg.toString());
+
+            mConn.sendMessage(msg.toString());
+        }
+        catch(JSONException ex) {
+            Log.e(TAG, "play request json error!");
         }
         catch(IOException ex) {
             Log.e(TAG, "player play playlist=" + playlist + " request error!");
@@ -276,13 +294,22 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
     {
         try
         {
-            String params = "\"spotify:track:" + trackId + "\"";
-            String msg = "{\"jsonrpc\":\"2.0\", \"method\":\"queue\",\"params\":[" + params + "],\"id\":" + SpotiHifi.QUEUE_MSG_ID + "}";
+            JSONObject msg = new JSONObject();
+            JSONArray params = new JSONArray();
 
-            mConn.sendMessage(msg);
+            params.put("spotify:track:" + trackId);
+
+            msg.put("jsonrpc", "2.0");
+            msg.put("method", "queue");
+            msg.put("params", params);
+            msg.put("id", SpotiHifi.QUEUE_MSG_ID);
+
+            mConn.sendMessage(msg.toString());
+        }
+        catch(JSONException ex) {
+            Log.e(TAG, "queue request json error!");
         }
         catch(IOException ex) {
-            //Toast.makeText(this, "queue request error!", Toast.LENGTH_SHORT).show();
             Log.e(TAG, "queue request error!");
             disconnectHandler();
         }
@@ -291,9 +318,18 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
     private void playerStopRequestHandler()
     {
         try {
-            String msg = "{\"jsonrpc\":\"2.0\", \"method\":\"stop\",\"params\":[],\"id\":" + SpotiHifi.STOP_MSG_ID + "}";
+            JSONObject msg = new JSONObject();
+            JSONArray params = new JSONArray();
 
-            mConn.sendMessage(msg);
+            msg.put("jsonrpc", "2.0");
+            msg.put("method", "stop");
+            msg.put("params", params);
+            msg.put("id", SpotiHifi.STOP_MSG_ID);
+
+            mConn.sendMessage(msg.toString());
+        }
+        catch(JSONException ex) {
+            Log.e(TAG, "stop request json error!");
         }
         catch(IOException ex) {
             Log.e(TAG, "player stop request error!");
@@ -304,9 +340,18 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
     private void playerPauseRequestHandler()
     {
         try {
-            String msg = "{\"jsonrpc\":\"2.0\", \"method\":\"pause\",\"params\":[],\"id\":" + SpotiHifi.PAUSE_MSG_ID + "}";
+            JSONObject msg = new JSONObject();
+            JSONArray params = new JSONArray();
 
-            mConn.sendMessage(msg);
+            msg.put("jsonrpc", "2.0");
+            msg.put("method", "pause");
+            msg.put("params", params);
+            msg.put("id", SpotiHifi.PAUSE_MSG_ID);
+
+            mConn.sendMessage(msg.toString());
+        }
+        catch(JSONException ex) {
+            Log.e(TAG, "pause request json error!");
         }
         catch(IOException ex) {
             Log.e(TAG, "player pause request error!");
@@ -317,9 +362,18 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
     private void playerSkipRequestHandler()
     {
         try {
-            String msg = "{\"jsonrpc\":\"2.0\", \"method\":\"skip\",\"params\":[],\"id\":" + SpotiHifi.SKIP_MSG_ID + "}";
+            JSONObject msg = new JSONObject();
+            JSONArray params = new JSONArray();
 
-            mConn.sendMessage(msg);
+            msg.put("jsonrpc", "2.0");
+            msg.put("method", "skip");
+            msg.put("params", params);
+            msg.put("id", SpotiHifi.SKIP_MSG_ID);
+
+            mConn.sendMessage(msg.toString());
+        }
+        catch(JSONException ex) {
+            Log.e(TAG, "skip request json error!");
         }
         catch(IOException ex) {
             Log.e(TAG, "player skip request error!");
