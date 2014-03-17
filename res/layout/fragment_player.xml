@@ -29,6 +29,7 @@
         android:textStyle="bold"
         android:textColor="#eee"
         android:background="#90000000"
+        android:singleLine="true"
         android:text="" />
 
     <TextView
