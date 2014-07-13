@@ -412,7 +412,7 @@ public class MainActivity extends Activity implements Callback {
                 }
             });
 
-            lv.setFastScrollAlwaysVisible(true);
+            //lv.setFastScrollAlwaysVisible(true);
             lv.setAdapter(mAdapter);
 
             getLoaderManager().initLoader(0, null, this);
