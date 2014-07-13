@@ -574,9 +574,9 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
                     try
                     {
                         String trackId = track.getString("track_id");
-                        String coverId = track.getString("cover_id");
+                        String albumId = track.getString("album_id");
 
-                        coverRequestHandler(trackId, coverId);
+                        coverRequestHandler(trackId, "spotify:album:"+albumId);
                     }
                     catch(JSONException ex)
                     {
@@ -590,17 +590,17 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
             }
             else if ( state.equals("stopped") )
             {
-                values.put(SpotiHifi.Tracks.COLUMN_NAME_TITLE, "-");
-                values.put(SpotiHifi.Tracks.COLUMN_NAME_ARTIST, "-");
-                values.put(SpotiHifi.Tracks.COLUMN_NAME_ALBUM, "-");
+                values.put(SpotiHifi.PlayerState.COLUMN_NAME_TITLE, "-");
+                values.put(SpotiHifi.PlayerState.COLUMN_NAME_ARTIST, "-");
+                values.put(SpotiHifi.PlayerState.COLUMN_NAME_ALBUM, "-");
                 values.put(SpotiHifi.PlayerState.COLUMN_NAME_STATE, "Stopped");
                 values.put(SpotiHifi.PlayerState.COLUMN_NAME_COVER_ART, "");
             }
             else if ( state.equals("skip") )
             {
-                values.put(SpotiHifi.Tracks.COLUMN_NAME_TITLE, "-");
-                values.put(SpotiHifi.Tracks.COLUMN_NAME_ARTIST, "-");
-                values.put(SpotiHifi.Tracks.COLUMN_NAME_ALBUM, "-");
+                values.put(SpotiHifi.PlayerState.COLUMN_NAME_TITLE, "-");
+                values.put(SpotiHifi.PlayerState.COLUMN_NAME_ARTIST, "-");
+                values.put(SpotiHifi.PlayerState.COLUMN_NAME_ALBUM, "-");
                 values.put(SpotiHifi.PlayerState.COLUMN_NAME_STATE, "Skipping");
                 values.put(SpotiHifi.PlayerState.COLUMN_NAME_COVER_ART, "");
             }
