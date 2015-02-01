@@ -2,6 +2,7 @@ package benny.bach.spotihifi;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.app.FragmentManager;
 import android.app.LoaderManager;
 import android.content.ComponentName;
 import android.content.ContentUris;
@@ -13,6 +14,7 @@ import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.PixelFormat;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -202,11 +204,21 @@ public class MainActivity extends Activity implements Callback {
         //            .replace(android.R.id.content, mTrackListFragment)
         //            .commit();
         //  break;
-        case SpotiHifi.RESULT_MSG_ID:
+        case SpotiHifi.RESULT_MSG_ID: {
             Bundle bundle = msg.getData();
             String result = bundle.getString("result");
             Toast.makeText(getApplicationContext(), result, Toast.LENGTH_SHORT).show();
             break;
+        }
+        case SpotiHifi.REMAINING_MSG_ID: {
+            Bundle bundle = msg.getData();
+            long remaining = bundle.getLong("remaining");
+            Fragment fragment = getFragmentManager().findFragmentByTag("info");
+            if (fragment instanceof PlayerFragment) {
+                ((PlayerFragment) fragment).setTrackRemaining(remaining/1000);
+            }
+            break;
+        }
         default:
             Log.i(TAG, "main activity got unknown message");
             break;
@@ -791,6 +803,15 @@ public class MainActivity extends Activity implements Callback {
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             View rootView = inflater.inflate(R.layout.fragment_player, container, false);
+
+            rootView.setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
+                | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
+                | View.SYSTEM_UI_FLAG_IMMERSIVE);
+
             return rootView;
         }
 
@@ -847,6 +868,21 @@ public class MainActivity extends Activity implements Callback {
         //  Log.i(TAG, "PlayerFragment: destroy");
         //}
 
+        public void setTrackRemaining(long seconds)
+        {
+            long m = Math.abs((seconds / 60) % 60);
+            long s = Math.abs((seconds) % 60);
+
+            TextView tv = (TextView) getActivity().findViewById(R.id.state4);
+
+            if ( seconds >= 0 ) {
+                tv.setText(String.format("%d:%02d", m, s));
+            }
+            else {
+                tv.setText(String.format("-%d:%02d", m, s));
+            }
+        }
+
         public Loader<Cursor> onCreateLoader(int id, Bundle args)
         {
              return new CursorLoader(
@@ -867,6 +903,7 @@ public class MainActivity extends Activity implements Callback {
             {
                 TextView tv1 = (TextView) getActivity().findViewById(R.id.state1);
                 TextView tv2 = (TextView) getActivity().findViewById(R.id.state2);
+                TextView tv3 = (TextView) getActivity().findViewById(R.id.state3);
                 ImageView iv1 = (ImageView) getActivity().findViewById(R.id.cover_art);
                 //TextView tv3 = (TextView) getActivity().findViewById(R.id.state3);
 
@@ -881,7 +918,9 @@ public class MainActivity extends Activity implements Callback {
                 Bitmap bitmap = BitmapFactory.decodeByteArray(image, 0, image.length);
 
                 tv1.setText(title);
-                tv2.setText(artist + "   \u2022   " + album);
+                //tv2.setText(artist + "   \u2022   " + album);
+                tv2.setText(artist);
+                tv3.setText(album);
                 iv1.setImageBitmap(bitmap);
                 //tv3.setText(state);
             }

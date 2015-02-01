@@ -3,6 +3,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#222222"
     android:orientation="vertical" >
 
 <!--
@@ -14,38 +15,118 @@
 
     <ImageView
         android:id="@+id/cover_art"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:scaleType="fitEnd"
+        android:gravity="right"
         android:contentDescription="album cover" />
 
-    <TextView
-        android:id="@+id/state1"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="top|center"
-        android:textAlignment="center"
-        android:textSize="30sp"
-        android:typeface="sans"
-        android:textStyle="bold"
-        android:textColor="#eee"
-        android:background="#90000000"
-        android:singleLine="true"
-        android:text="" />
+    <!--android:background="@drawable/gradient"-->
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:gravity="left|center_vertical" >
 
-    <TextView
-        android:id="@+id/state2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:gravity="bottom|center"
-        android:textAlignment="center"
-        android:textSize="24sp"
-        android:typeface="sans"
-        android:textStyle="bold"
-        android:textColor="#888"
-        android:background="#90000000"
-        android:text="" />
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:orientation="vertical">
+        
+        <LinearLayout
+            android:id="@+id/player_top"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:gravity="top|fill_vertical"
+            android:layout_weight="1"
+            android:orientation="vertical">
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical">
+                <TextView
+                    android:id="@+id/state1"
+                    android:background="#99222222"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="20dp"
+                    android:paddingRight="20dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp"
+                    android:textSize="36dp"
+                    android:typeface="sans"
+                    android:textStyle="bold"
+                    android:textColor="#ccc"
+                    android:singleLine="true"
+                    android:text="Fields of Gold" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/player_center"
+            android:layout_width="fill_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_below="@id/player_top"
+            android:gravity="center_vertical"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/state2"
+                android:background="#99222222"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
+                android:layout_below="@id/state1"
+                android:textSize="22dp"
+                android:typeface="sans"
+                android:textStyle="bold"
+                android:textColor="#aaa"
+                android:text="Keith Urban" />
+
+            <TextView
+                android:id="@+id/state3"
+                android:background="#99222222"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
+                android:layout_below="@id/state2"
+                android:textSize="22dp"
+                android:typeface="sans"
+                android:textStyle="bold"
+                android:textColor="#aaa"
+                android:text="Keith Urban" />
+        </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/player_top"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:gravity="top|fill_vertical"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/state4"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:paddingLeft="20dp"
+                    android:paddingRight="20dp"
+                    android:gravity="center_vertical"
+                    android:textSize="36dp"
+                    android:typeface="sans"
+                    android:textColor="#aaa"
+                    android:singleLine="true"
+                    android:text="0:00" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </RelativeLayout>
     <!--<TextView
         android:id="@+id/state3"
         android:layout_width="match_parent"

@@ -1,10 +1,15 @@
 package benny.bach.spotihifi;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Timer;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -19,6 +24,7 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -36,12 +42,72 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
     private static final String TAG_TRACK_ID = "track_id";
     private static final String TAG_PLAYLIST = "playlist";
 
+    private static Timer timer = new Timer();
+
     private final IBinder mBinder = new SpotiHifiBinder();
 
     private Looper mServiceLooper;
     private ServiceHandler mServiceHandler;
     private Handler mResultHandler;
     private SocketConnection mConn;
+
+    private class TrackCountDown implements Runnable
+    {
+        private boolean mStarted;
+        //private long    mRemaining;
+        private long    mDuration;
+        private long    mStartTime;
+
+        public TrackCountDown() {
+            //mRemaining = 0;
+        }
+
+        public void start(long duration) {
+            Log.i(TAG, "track count down start duration=" + duration);
+            //mRemaining = duration;
+            mDuration = duration*1000;
+            mStartTime = System.currentTimeMillis();
+            if ( !mStarted ) {
+                mStarted = true;
+                mServiceHandler.postDelayed(this, 250);
+            }
+        }
+
+        public void stop() {
+            mStarted = false;
+        }
+
+        @Override
+        public void run() {
+            if ( mStarted ) {
+                //mRemaining--;
+                long elapsed = System.currentTimeMillis() - mStartTime;
+                long remaining = mDuration - elapsed;
+
+                //Log.i(TAG, "track count down remaining=" + remaining);
+
+                if ( mResultHandler != null )
+                {
+                    Message msg = mResultHandler.obtainMessage(SpotiHifi.REMAINING_MSG_ID);
+                    Bundle bundle = new Bundle();
+                    bundle.putLong("remaining", remaining);
+                    msg.setData(bundle);
+                    mResultHandler.sendMessage(msg);
+                }
+
+                mServiceHandler.postDelayed(this, 250);
+            }
+        }
+    }
+
+    //private Runnable mTrackCountDown = new Runnable() {
+    //    @Override
+    //    public void run() {
+    //        Log.i(TAG, "track count down");
+    //        mServiceHandler.postDelayed(this, 1000);
+    //    }
+    //};
+    private TrackCountDown mTrackCountDown = new TrackCountDown();
 
     //int mStartMode;
     //IBinder mBinder;
@@ -138,11 +204,15 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
         mServiceHandler.sendMessage(msg);
     }
 
-    public void sync(long incarnation, long transaction)
+    public void disconnected()
     {
-        //Log.i(TAG, "spotihifi service sync, incarnation=" + incarnation + ", transaction=" + transaction);
+        Message msg = mServiceHandler.obtainMessage(SpotiHifi.SERVICE_DISCONNECTED_MSG_ID);
+        mServiceHandler.sendMessage(msg);
+    }
 
-        Message msg = mServiceHandler.obtainMessage(SpotiHifi.SYNC_MSG_ID);
+    public void index()
+    {
+        Message msg = mServiceHandler.obtainMessage(SpotiHifi.INDEX_MSG_ID);
         mServiceHandler.sendMessage(msg);
     }
 
@@ -198,8 +268,11 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
             case SpotiHifi.SERVICE_CONNECT_MSG_ID:
                 connectHandler();
                 break;
-            case SpotiHifi.SYNC_MSG_ID:
-                syncRequestHandler();
+            case SpotiHifi.SERVICE_DISCONNECTED_MSG_ID:
+                disconnectHandler();
+                break;
+            case SpotiHifi.INDEX_MSG_ID:
+                indexRequestHandler();
                 break;
             case SpotiHifi.PLAY_MSG_ID:
             {
@@ -231,20 +304,17 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
         }
     }
 
-    private void syncRequestHandler()
+    private void indexRequestHandler()
     {
         try
         {
             JSONObject msg = new JSONObject();
-            JSONObject params = new JSONObject();
-
-            params.put("incarnation", Long.toString(-1, 10));
-            params.put("transaction", Long.toString(-1, 10));
+            //JSONObject params = new JSONObject();
 
             msg.put("jsonrpc", "2.0");
-            msg.put("method", "sync");
-            msg.put("params", params);
-            msg.put("id", SpotiHifi.SYNC_MSG_ID);
+            msg.put("method", "db/index");
+            msg.put("params", null);
+            msg.put("id", SpotiHifi.INDEX_MSG_ID);
 
             mConn.sendMessage(msg.toString());
         }
@@ -259,23 +329,27 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
 
     private void playHandler(String playlist)
     {
+        if ( mConn == null ) {
+            return;
+        }
+
         try {
             JSONObject msg = new JSONObject();
 
             msg.put("jsonrpc", "2.0");
-            msg.put("method", "play");
+            msg.put("method", "player/play");
 
             if ( playlist != null ) {
                 JSONObject params = new JSONObject();
-                params.put("playlist", playlist);
+                params.put("tag", playlist);
                 msg.put("params", params);
             }
-            else {
-                JSONArray params = new JSONArray();
-                msg.put("params", params);
-            }
+            //else {
+            //    JSONArray params = new JSONArray();
+            //    msg.put("params", params);
+            //}
 
-            msg.put("id", SpotiHifi.PLAY_MSG_ID);
+            //msg.put("id", SpotiHifi.PLAY_MSG_ID);
 
             Log.i(TAG, msg.toString());
 
@@ -292,15 +366,19 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
 
     private void queueRequestHandler(String trackId)
     {
+        if ( mConn == null ) {
+            return;
+        }
+
         try
         {
             JSONObject msg = new JSONObject();
-            JSONArray params = new JSONArray();
+            JSONObject params = new JSONObject();
 
-            params.put("spotify:track:" + trackId);
+            params.put("id", trackId);
 
             msg.put("jsonrpc", "2.0");
-            msg.put("method", "queue");
+            msg.put("method", "player/queue");
             msg.put("params", params);
             msg.put("id", SpotiHifi.QUEUE_MSG_ID);
 
@@ -317,12 +395,16 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
 
     private void playerStopRequestHandler()
     {
+        if ( mConn == null ) {
+            return;
+        }
+
         try {
             JSONObject msg = new JSONObject();
             JSONArray params = new JSONArray();
 
             msg.put("jsonrpc", "2.0");
-            msg.put("method", "stop");
+            msg.put("method", "player/stop");
             msg.put("params", params);
             msg.put("id", SpotiHifi.STOP_MSG_ID);
 
@@ -361,12 +443,16 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
 
     private void playerSkipRequestHandler()
     {
+        if ( mConn == null ) {
+            return;
+        }
+
         try {
             JSONObject msg = new JSONObject();
             JSONArray params = new JSONArray();
 
             msg.put("jsonrpc", "2.0");
-            msg.put("method", "skip");
+            msg.put("method", "player/skip");
             msg.put("params", params);
             msg.put("id", SpotiHifi.SKIP_MSG_ID);
 
@@ -381,17 +467,21 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
         }
     }
 
-    private void coverRequestHandler(String trackId, String coverId)
+    //private void coverRequestHandler(String trackId, String coverId)
+    private void coverRequestHandler(String albumId)
     {
+        if ( mConn == null ) {
+            return;
+        }
+
         try {
             JSONObject msg = new JSONObject();
             JSONObject params = new JSONObject();
 
-            params.put("track_id", trackId);
-            params.put("cover_id", coverId);
+            params.put("album_id", albumId);
 
             msg.put("jsonrpc", "2.0");
-            msg.put("method", "get-cover");
+            msg.put("method", "db/cover");
             msg.put("params", params);
             msg.put("id", SpotiHifi.COVER_MSG_ID);
 
@@ -427,85 +517,84 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
         catch(IOException ex)
         {
             Log.e(TAG, "connect failed!");
+            SpotiHifiService.this.disconnected();
         }
 
     }
 
-    private void disconnectHandler()
-    {
-        Log.i(TAG, "connection lost!");
+    private void disconnectHandler() {
+        if ( mConn != null ) {
+            Log.i(TAG, "connection lost!");
 
-        getContentResolver().call(Uri.parse("content://benny.bach.spotihifi/service/state"), "disconnected", null, null);
+            getContentResolver().call(Uri.parse("content://benny.bach.spotihifi/service/state"), "disconnected", null, null);
 
-        mConn.close();
-        mConn = null;
+            mTrackCountDown.stop();
+            mConn.close();
+
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            connect();
+            //mConn = null;
+        }
     }
 
-    private void syncResponseHandler(JSONObject object)
+    private void indexResponseHandler(JSONObject object)
     {
         JSONObject result = object.optJSONObject("result");
 
         if ( result != null )
         {
-            long incarnation = Long.parseLong(result.optString("incarnation", "-1"));
-            long transaction = Long.parseLong(result.optString("transaction", "-1"));
+            try
+            {
+                // Create array to pass to bulk insert.
+                //ContentValues[] values = new ContentValues[tracks.length()];
+                List<ContentValues> values = new ArrayList<ContentValues>();
 
-            //if ( incarnation == mIncarnation )
-            if ( false )
-            {
-                // TODO: Handle transaction. For now assume nothing has changed.
-                Log.i(TAG, "sync result - nothing changed");
-                //Message msg = mResHandler.obtainMessage(SYNC_COMPLETE_NO_CHANGE_MSG_ID);
-                //mResHandler.sendMessage(msg);
-            }
-            else
-            {
-                // Rebuild database.
-                JSONArray tracks = result.optJSONArray("tracks");
-                if ( tracks != null )
+                //int valueIndex = 0;
+
+                JSONArray artists = result.getJSONArray("artists");
+                for (int i = 0; i < artists.length(); i++)
                 {
-                    // Create array to pass to bulk insert.
-                    ContentValues[] values = new ContentValues[tracks.length()];
+                    JSONObject artist = artists.getJSONObject(i);
+                    JSONArray albums = artist.getJSONArray("albums");
 
-                    for ( int i=0; i<tracks.length(); i++ )
+                    for (int j = 0; j < albums.length(); j++)
                     {
-                        JSONObject song = tracks.optJSONObject(i);
-                        if ( song != null ) {
-                            try
-                            {
-                                ContentValues initialValues = new ContentValues();
-                                initialValues.put(SpotiHifi.Tracks.COLUMN_NAME_TITLE, song.getString("title"));
-                                initialValues.put(SpotiHifi.Tracks.COLUMN_NAME_ARTIST, song.getString("artist"));
-                                initialValues.put(SpotiHifi.Tracks.COLUMN_NAME_ALBUM, song.getString("album"));
-                                initialValues.put(SpotiHifi.Tracks.COLUMN_NAME_TRACK_NUMBER, song.getInt("track_number"));
-                                initialValues.put(SpotiHifi.Tracks.COLUMN_NAME_TRACK_ID, song.getString("track_id"));
-                                initialValues.put(SpotiHifi.Tracks.COLUMN_NAME_PLAYLISTS, song.getJSONArray("playlists").toString());
+                        JSONObject album = albums.getJSONObject(j);
+                        JSONArray tracks = album.getJSONArray("tracks");
 
-                                values[i] = initialValues;
-                            }
-                            catch(JSONException ex) {
-                                Log.e(TAG, "invalid song");
-                            }
-                        }
-                        else {
-                            Log.e(TAG, "song is null");
+                        for (int k = 0; k < tracks.length(); k++)
+                        {
+                            JSONObject track = tracks.getJSONObject(k);
+
+                            ContentValues initialValues = new ContentValues();
+                            initialValues.put(SpotiHifi.Tracks.COLUMN_NAME_TITLE, track.getString("title"));
+                            initialValues.put(SpotiHifi.Tracks.COLUMN_NAME_ARTIST, artist.getString("name"));
+                            initialValues.put(SpotiHifi.Tracks.COLUMN_NAME_ALBUM, album.getString("title"));
+                            initialValues.put(SpotiHifi.Tracks.COLUMN_NAME_TRACK_NUMBER, track.getInt("tn"));
+                            initialValues.put(SpotiHifi.Tracks.COLUMN_NAME_TRACK_ID, track.getString("id"));
+                            initialValues.put(SpotiHifi.Tracks.COLUMN_NAME_PLAYLISTS, track.getJSONArray("tags").toString());
+
+                            //values[valueIndex++] = initialValues;
+                            values.add(initialValues);
                         }
                     }
-                    // Insert tracks and notify observers.
-                    getContentResolver().bulkInsert(SpotiHifi.Tracks.CONTENT_URI, values);
-                    getContentResolver().notifyChange(SpotiHifi.Tracks.CONTENT_URI, null);
-                    getContentResolver().notifyChange(SpotiHifi.Playlists.CONTENT_URI, null);
-                    getContentResolver().notifyChange(SpotiHifi.Artists.CONTENT_URI, null);
-                }
-                else {
-                    Log.e(TAG, "sync result has no tracks");
                 }
 
-                //mIncarnation = incarnation;
-                //mTransaction = transaction;
+                // Insert tracks and notify observers.
+                ContentValues[] values_arr = values.toArray(new ContentValues[values.size()]);
 
-                //Message msg = mResHandler.obtainMessage(SYNC_COMPLETE_RELOAD_MSG_ID);
-                //mResHandler.sendMessage(msg);
+                getContentResolver().bulkInsert(SpotiHifi.Tracks.CONTENT_URI, values_arr);
+                getContentResolver().notifyChange(SpotiHifi.Tracks.CONTENT_URI, null);
+                getContentResolver().notifyChange(SpotiHifi.Playlists.CONTENT_URI, null);
+                getContentResolver().notifyChange(SpotiHifi.Artists.CONTENT_URI, null);
+            }
+            catch(JSONException ex) {
+                Log.e(TAG, "index load error!");
             }
         }
         else {
@@ -521,10 +610,11 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
         {
             try
             {
-                String imageId = result.getString("cover_id");
+                //String imageId = result.getString("cover_id");
                 String imageData = result.getString("image_data");
 
-                Log.i(TAG, "loaded cover id : " + imageId);
+                //Log.i(TAG, "loaded cover id : " + imageId);
+                Log.i(TAG, "loaded cover id");
 
                 ContentValues values = new ContentValues();
 
@@ -553,15 +643,25 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
 
             if ( state.equals("playing") )
             {
-                //ContentValues values = new ContentValues();
-
                 JSONObject track = params.optJSONObject("track");
 
                 if ( track != null )
                 {
-                    values.put(SpotiHifi.Tracks.COLUMN_NAME_TITLE, track.optString("title", ""));
-                    values.put(SpotiHifi.Tracks.COLUMN_NAME_ARTIST, track.optString("artist", ""));
-                    values.put(SpotiHifi.Tracks.COLUMN_NAME_ALBUM, track.optString("album", ""));
+                    values.put(SpotiHifi.PlayerState.COLUMN_NAME_TITLE, track.optString("title", ""));
+
+                    JSONObject artist = track.optJSONObject("artist");
+                    if ( artist != null )
+                    {
+                        values.put(SpotiHifi.PlayerState.COLUMN_NAME_ARTIST, artist.optString("name", ""));
+                        values.put(SpotiHifi.PlayerState.COLUMN_NAME_ARTIST_ID, artist.optString("id", ""));
+                    }
+
+                    JSONObject album = track.optJSONObject("album");
+                    if ( album != null )
+                    {
+                        values.put(SpotiHifi.PlayerState.COLUMN_NAME_ALBUM, album.optString("title", ""));
+                        values.put(SpotiHifi.PlayerState.COLUMN_NAME_ALBUM_ID, album.optString("id", ""));
+                    }
                 }
 
                 values.put(SpotiHifi.PlayerState.COLUMN_NAME_STATE, "Playing");
@@ -571,12 +671,18 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
 
                 if ( track != null )
                 {
+                    Integer duration_in_secs = track.optInt("duration", 0);
+
+                    mTrackCountDown.start(duration_in_secs);
+
                     try
                     {
-                        String trackId = track.getString("track_id");
-                        String albumId = track.getString("album_id");
-
-                        coverRequestHandler(trackId, "spotify:album:"+albumId);
+                        JSONObject album = track.optJSONObject("album");
+                        if ( album != null )
+                        {
+                            String album_id = album.getString("id");
+                            coverRequestHandler(album_id);
+                        }
                     }
                     catch(JSONException ex)
                     {
@@ -595,6 +701,7 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
                 values.put(SpotiHifi.PlayerState.COLUMN_NAME_ALBUM, "-");
                 values.put(SpotiHifi.PlayerState.COLUMN_NAME_STATE, "Stopped");
                 values.put(SpotiHifi.PlayerState.COLUMN_NAME_COVER_ART, "");
+                mTrackCountDown.stop();
             }
             else if ( state.equals("skip") )
             {
@@ -606,6 +713,7 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
             }
             else {
                 values.put(SpotiHifi.PlayerState.COLUMN_NAME_STATE, "<unknown>");
+                mTrackCountDown.stop();
             }
 
             getContentResolver().update(SpotiHifi.PlayerState.CONTENT_URI, values, null, null);
@@ -616,7 +724,7 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
         }
     }
 
-    void responseHandler(JSONObject object)
+    synchronized void responseHandler(JSONObject object)
     {
         if ( mResultHandler != null )
         {
@@ -650,7 +758,12 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
         }
 
         public synchronized boolean isConnected() {
-            return mSocket.isConnected();
+            if ( mSocket.isClosed() ) {
+                return false;
+            }
+            else {
+                return mSocket.isConnected();
+            }
         }
 
         private void connect() throws IOException
@@ -662,6 +775,7 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
         private void close()
         {
             try {
+                mReceiver.interrupt();
                 mSocket.close();
             }
             catch(IOException ex) {
@@ -680,77 +794,66 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
 
             byte[] buf = msg.getBytes("UTF-8");
 
-            int len = buf.length;
+            //int len = buf.length;
 
-            out.write((byte)(len>>>24));
-            out.write((byte)(len>>>16));
-            out.write((byte)(len>>>8));
-            out.write((byte)(len));
-            out.write(buf, 0, len);
+            //out.write((byte)(len>>>24));
+            //out.write((byte)(len>>>16));
+            //out.write((byte)(len>>>8));
+            //out.write((byte)(len));
+            //out.write(buf, 0, len);
+            out.write(buf, 0, buf.length);
+            out.write('\0');
             out.flush();
         }
 
         private final class Receiver extends Thread
         {
+            BufferedReader mBuffer;
+
             @Override
             public void run()
             {
+                try {
+                    mBuffer = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
+                }
+                catch(IOException ex) {
+                    Log.i(TAG, "receiver receive error");
+                }
+
                 while ( true )
                 {
                     try {
-                        if ( isConnected() ) {
-                            String msg = doReceive();
+                        String msg = doReceive();
+                        if ( msg != null ) {
                             doProcessMessage(msg);
                         }
                         else {
-                            Log.i(TAG, "receiver thread not connected");
-                            Thread.sleep(1000);
+                            close();
+                            SpotiHifiService.this.disconnected();
+                            break;
                         }
                     }
                     catch(IOException ex) {
                         Log.i(TAG, "receiver receive error");
-                        break;
-                    }
-                    catch(InterruptedException ex) {
-                        Log.i(TAG, "receiver thread interrupted");
+                        //break;
                     }
                 }
             }
 
             private String doReceive() throws IOException
             {
-                InputStream in = mSocket.getInputStream();
-
-                byte hbuf[] = new byte[4];
-
-                int hl = 0;
-
-                do {
-                    int received = in.read(hbuf, hl, 4-hl);
-                    if ( received > 0 ) {
-                        hl += received;
-                    }
-                } while (hl < 4);
-
-                int len = 0;
-
-                len += (int)(hbuf[3]&0xff);
-                len += (int)(hbuf[2]&0xff)<<8;
-                len += (int)(hbuf[1]&0xff)<<16;
-                len += (int)(hbuf[0]&0xff)<<24;
-
-                byte bbuf[] = new byte[len];
-
-                int bl = 0;
-
-                do {
-                    int received = in.read(bbuf, bl, len-bl);
-                    if ( received > 0 ) {
-                        bl += received;
-                    }
-                } while (bl < len);
-
-                return new String(bbuf, "UTF-8");
+                int c = mBuffer.read();
+                // if EOF
+                if (c == -1){
+                    return null;
+                }
+                StringBuilder builder = new StringBuilder("");
+                // Check if new line or EOF
+                while (c != -1 && c != 0){
+                    builder.append((char) c);
+                    c = mBuffer.read();
+                }
+                return builder.toString();
             }
 
             private void doProcessMessage(String msg)
@@ -764,7 +867,7 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
                     int id = object.optInt("id");
 
                     if ( id == 1 ) {
-                        syncResponseHandler(object);
+                        indexResponseHandler(object);
                     }
                     else if ( id == 9 ) {
                         coverResponseHandler(object);
@@ -777,7 +880,7 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
                     {
                         String method = object.optString("method");
 
-                        if ( method.equals("pb-event") ) {
+                        if ( method.equals("player/event") ) {
                             playbackEventHandler(object);
                         } else {
                             Log.i(TAG, "result:" + object.toString());

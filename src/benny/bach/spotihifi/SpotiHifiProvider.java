@@ -103,12 +103,14 @@ public class SpotiHifiProvider extends ContentProvider
                     + SpotiHifi.PlayerState.COLUMN_NAME_ID + " INTEGER PRIMARY KEY,"
                     + SpotiHifi.PlayerState.COLUMN_NAME_TITLE + ","
                     + SpotiHifi.PlayerState.COLUMN_NAME_ARTIST + ","
+                    + SpotiHifi.PlayerState.COLUMN_NAME_ARTIST_ID + ","
                     + SpotiHifi.PlayerState.COLUMN_NAME_ALBUM + ","
+                    + SpotiHifi.PlayerState.COLUMN_NAME_ALBUM_ID + ","
                     + SpotiHifi.PlayerState.COLUMN_NAME_STATE + ","
                     + SpotiHifi.PlayerState.COLUMN_NAME_COVER_ART + " BLOB" + ");");
 
             // Create the one and only player state row.
-            db.execSQL("INSERT INTO " + SpotiHifi.PlayerState.TABLE_NAME + " VALUES (0,\"-\",\"-\",\"-\",\"-\", \"\");");
+            db.execSQL("INSERT INTO " + SpotiHifi.PlayerState.TABLE_NAME + " VALUES (0,\"-\",\"-\",\"\",\"-\",\"\",\"-\",\"\");");
         }
 
         @Override
@@ -142,6 +144,7 @@ public class SpotiHifiProvider extends ContentProvider
             if ( mService.isConnected() ) {
                 // Issue sync request.
                 //mService.sync(-1, -1);
+                mService.index();
                 Log.e(TAG, "Should not happen!");
             }
             else {
@@ -369,9 +372,9 @@ public class SpotiHifiProvider extends ContentProvider
     {
         if ( method == "connected" )
         {
-            Toast.makeText(getContext(), "synchronizing...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "loading index...", Toast.LENGTH_SHORT).show();
 
-            mService.sync(-1, -1);
+            mService.index();
         }
         else if ( method == "disconnected")
         {

@@ -15,7 +15,7 @@ public final class SpotiHifi
     /////
     // Message IDs
     //
-    public static final int SYNC_MSG_ID = 1;
+    public static final int INDEX_MSG_ID = 1;
     public static final int PLAY_MSG_ID = 2;
     public static final int QUEUE_MSG_ID = 3;
     public static final int STOP_MSG_ID = 4;
@@ -24,6 +24,8 @@ public final class SpotiHifi
     public static final int RESULT_MSG_ID = 7;
     public static final int SERVICE_CONNECT_MSG_ID = 8;
     public static final int COVER_MSG_ID = 9;
+    public static final int SERVICE_DISCONNECTED_MSG_ID = 10;
+    public static final int REMAINING_MSG_ID = 11;
 
     /////
     // Track table contract.
@@ -158,7 +160,9 @@ public final class SpotiHifi
         public static final String COLUMN_NAME_ID = "_id";
         public static final String COLUMN_NAME_TITLE = "title";
         public static final String COLUMN_NAME_ARTIST = "artist";
+        public static final String COLUMN_NAME_ARTIST_ID = "artist_id";
         public static final String COLUMN_NAME_ALBUM = "album";
+        public static final String COLUMN_NAME_ALBUM_ID = "album_id";
         public static final String COLUMN_NAME_STATE = "state";
         public static final String COLUMN_NAME_COVER_ART = "cover_art";
 
@@ -167,7 +171,9 @@ public final class SpotiHifi
             COLUMN_NAME_ID,
             COLUMN_NAME_TITLE,
             COLUMN_NAME_ARTIST,
+            COLUMN_NAME_ARTIST_ID,
             COLUMN_NAME_ALBUM,
+            COLUMN_NAME_ALBUM_ID,
             COLUMN_NAME_STATE,
             COLUMN_NAME_COVER_ART
         };
