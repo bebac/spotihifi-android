@@ -43,20 +43,12 @@ import android.widget.Toast;
 public class MainActivity extends Activity implements Callback {
     private static final String TAG = "MainActivity";
 
-    //private TrackListFragment mTrackListFragment;
-    //private ArtistListFragment mArtistListFragment;
-    //private PlaylistListFragment mPlaylistListFragment;
-    //private ViewPager mViewPager;
     private SpotiHifiService mSpotiHifiService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        //mTrackListFragment = new TrackListFragment();
-        //mArtistListFragment = new ArtistListFragment();
-        //mPlaylistListFragment = new PlaylistListFragment();
 
         if ( savedInstanceState == null ) {
             getFragmentManager().beginTransaction()
@@ -83,25 +75,6 @@ public class MainActivity extends Activity implements Callback {
         Log.i(TAG, "resuming");
 
         bindService(new Intent(this, SpotiHifiService.class), mConnection, Context.BIND_AUTO_CREATE);
-
-        // Hmmm - For now remove any content as sync will load everything. Really need
-        // to show a loading message.
-
-        //Toast.makeText(getApplicationContext(), "synchronizing...", Toast.LENGTH_SHORT).show();
-
-        //clearBackStack();
-
-        //getFragmentManager().beginTransaction()
-        //  .remove(mTrackListFragment)
-        //  .commit();
-
-        //getFragmentManager().beginTransaction()
-        //  .remove(mArtistListFragment)
-        //  .commit();
-
-        //getFragmentManager().beginTransaction()
-        //  .remove(mPlaylistListFragment)
-        //  .commit();
     }
 
     @Override
@@ -194,16 +167,6 @@ public class MainActivity extends Activity implements Callback {
     public boolean handleMessage(Message msg) {
         switch ( msg.what )
         {
-        //case SpotifyService.SYNC_COMPLETE_RELOAD_MSG_ID:
-        //  // Hmmm - For now create a new track list fragment and show it.
-        //  mTrackListFragment = new TrackListFragment();
-        //  // FALL THROUGH INTENDED
-        //case SpotifyService.SYNC_COMPLETE_NO_CHANGE_MSG_ID:
-        //  Log.i(TAG, "Show songs");
-        //    getFragmentManager().beginTransaction()
-        //            .replace(android.R.id.content, mTrackListFragment)
-        //            .commit();
-        //  break;
         case SpotiHifi.RESULT_MSG_ID: {
             Bundle bundle = msg.getData();
             String result = bundle.getString("result");
@@ -905,7 +868,6 @@ public class MainActivity extends Activity implements Callback {
                 TextView tv2 = (TextView) getActivity().findViewById(R.id.state2);
                 TextView tv3 = (TextView) getActivity().findViewById(R.id.state3);
                 ImageView iv1 = (ImageView) getActivity().findViewById(R.id.cover_art);
-                //TextView tv3 = (TextView) getActivity().findViewById(R.id.state3);
 
                 String title = data.getString(data.getColumnIndex(SpotiHifi.PlayerState.COLUMN_NAME_TITLE));
                 String artist = data.getString(data.getColumnIndex(SpotiHifi.PlayerState.COLUMN_NAME_ARTIST));
@@ -918,11 +880,9 @@ public class MainActivity extends Activity implements Callback {
                 Bitmap bitmap = BitmapFactory.decodeByteArray(image, 0, image.length);
 
                 tv1.setText(title);
-                //tv2.setText(artist + "   \u2022   " + album);
                 tv2.setText(artist);
                 tv3.setText(album);
                 iv1.setImageBitmap(bitmap);
-                //tv3.setText(state);
             }
         }
 
@@ -931,5 +891,4 @@ public class MainActivity extends Activity implements Callback {
             // TODO: Clear view.
         }
     }
-
 }

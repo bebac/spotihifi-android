@@ -54,17 +54,14 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
     private class TrackCountDown implements Runnable
     {
         private boolean mStarted;
-        //private long    mRemaining;
         private long    mDuration;
         private long    mStartTime;
 
         public TrackCountDown() {
-            //mRemaining = 0;
         }
 
         public void start(long duration) {
             Log.i(TAG, "track count down start duration=" + duration);
-            //mRemaining = duration;
             mDuration = duration*1000;
             mStartTime = System.currentTimeMillis();
             if ( !mStarted ) {
@@ -80,11 +77,8 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
         @Override
         public void run() {
             if ( mStarted ) {
-                //mRemaining--;
                 long elapsed = System.currentTimeMillis() - mStartTime;
                 long remaining = mDuration - elapsed;
-
-                //Log.i(TAG, "track count down remaining=" + remaining);
 
                 if ( mResultHandler != null )
                 {
@@ -100,13 +94,6 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
         }
     }
 
-    //private Runnable mTrackCountDown = new Runnable() {
-    //    @Override
-    //    public void run() {
-    //        Log.i(TAG, "track count down");
-    //        mServiceHandler.postDelayed(this, 1000);
-    //    }
-    //};
     private TrackCountDown mTrackCountDown = new TrackCountDown();
 
     //int mStartMode;
@@ -309,7 +296,6 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
         try
         {
             JSONObject msg = new JSONObject();
-            //JSONObject params = new JSONObject();
 
             msg.put("jsonrpc", "2.0");
             msg.put("method", "db/index");
@@ -344,10 +330,6 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
                 params.put("tag", playlist);
                 msg.put("params", params);
             }
-            //else {
-            //    JSONArray params = new JSONArray();
-            //    msg.put("params", params);
-            //}
 
             //msg.put("id", SpotiHifi.PLAY_MSG_ID);
 
@@ -467,7 +449,6 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
         }
     }
 
-    //private void coverRequestHandler(String trackId, String coverId)
     private void coverRequestHandler(String albumId)
     {
         if ( mConn == null ) {
@@ -538,7 +519,6 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
             }
 
             connect();
-            //mConn = null;
         }
     }
 
@@ -551,10 +531,7 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
             try
             {
                 // Create array to pass to bulk insert.
-                //ContentValues[] values = new ContentValues[tracks.length()];
                 List<ContentValues> values = new ArrayList<ContentValues>();
-
-                //int valueIndex = 0;
 
                 JSONArray artists = result.getJSONArray("artists");
                 for (int i = 0; i < artists.length(); i++)
@@ -579,7 +556,6 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
                             initialValues.put(SpotiHifi.Tracks.COLUMN_NAME_TRACK_ID, track.getString("id"));
                             initialValues.put(SpotiHifi.Tracks.COLUMN_NAME_PLAYLISTS, track.getJSONArray("tags").toString());
 
-                            //values[valueIndex++] = initialValues;
                             values.add(initialValues);
                         }
                     }
@@ -610,10 +586,8 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
         {
             try
             {
-                //String imageId = result.getString("cover_id");
                 String imageData = result.getString("image_data");
 
-                //Log.i(TAG, "loaded cover id : " + imageId);
                 Log.i(TAG, "loaded cover id");
 
                 ContentValues values = new ContentValues();
@@ -786,21 +760,11 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
         public synchronized void sendMessage(String msg) throws IOException
         {
             connectHandler();
-            //if ( ! isConnected() ) {
-            //  connect();
-            //}
 
             BufferedOutputStream out = new BufferedOutputStream(mSocket.getOutputStream());
 
             byte[] buf = msg.getBytes("UTF-8");
 
-            //int len = buf.length;
-
-            //out.write((byte)(len>>>24));
-            //out.write((byte)(len>>>16));
-            //out.write((byte)(len>>>8));
-            //out.write((byte)(len));
-            //out.write(buf, 0, len);
             out.write(buf, 0, buf.length);
             out.write('\0');
             out.flush();
@@ -894,5 +858,4 @@ public class SpotiHifiService extends Service implements OnSharedPreferenceChang
             }
         }
     }
-
 }
